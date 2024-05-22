@@ -89,6 +89,10 @@ async def start(ctx: BotContext[CommandEvent]):
 async def start(ctx: BotContext[CommandEvent]):
     mId = ctx.event.params
     message: Message = ctx.event.message
+    try:
+        await message.delete()
+    except Exception as er:
+        print(er)
     if mId and mId.isdigit():
         if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
             await message.send(

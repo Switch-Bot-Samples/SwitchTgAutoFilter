@@ -13,6 +13,10 @@ from tgconfig import LOG_CHANNEL
 @app.on_command("verify")
 async def verifyHandler(ctx: BotContext[CommandEvent]):
     m = ctx.event.message
+    try:
+        await m.delete()
+    except Exception as er:
+        print(er)
     param = ctx.event.params
     user = m.user
     logging.info(ctx)
@@ -38,7 +42,7 @@ async def verifyHandler(ctx: BotContext[CommandEvent]):
     userId = int(spliit[1])
 #    print(fileId)
     approvedUsers[userId] = time
-    await m.reply_text("Verified successfully!")
+    s = await m.reply_text(f"{m.user.username}: *Verified successfull*!!")
 
     from database.ia_filterdb import get_file_details
     from utils import get_size
@@ -60,7 +64,11 @@ async def verifyHandler(ctx: BotContext[CommandEvent]):
         file_id=fileId,
         caption=f_caption
     )
-    await m.send("Your file has been sent on telegram!")
+    try:
+        await s.edit_text(f"*@{user.username}: Verified successfully!*\nYour file has been sent on telegram!")
+    except Exception as er:
+        print(er)
+        await m.send("Your file has been sent on telegram!")
     if pHash.get(userId):
         await tgclient.delete_messages(
             chat_id=userId,
