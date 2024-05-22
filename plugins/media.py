@@ -22,6 +22,7 @@ from swutils import get_size, temp, file_int_from_name, file_str_from_int
 from aiohttp import ClientSession
 from aiohttp_client_cache import CacheBackend, SQLiteBackend, CachedSession
 from base64 import urlsafe_b64encode
+
 # from rapidfuzz.fuzz import token_ratio
 
 from config import ADMINS, CUSTOM_FILE_CAPTION
@@ -215,7 +216,11 @@ async def listenCallback(ctx: BotContext[CallbackQueryEvent]):
         user_id=ctx.event.action_by_id,
         media_info=media,
         inline_markup=InlineMarkup(
-            [[InlineKeyboardButton("Direct Download", url=file.file_url)]]
+            [
+                [InlineKeyboardButton("Direct Download", url=file.file_url)],
+                [InlineKeyboardButton("Stream file", callback_data=f"vfile|{data}")
+                 ],
+            ]
         ),
     )
     await m.edit_inline_markup(
@@ -290,7 +295,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                 )
             ]
         )
-        
+
     try:
         tz = []
         url = f"https://api.themoviedb.org/3/search/movie?query={search.replace(' ', '+')}&include_adult=false&language=en-US&page=1"
@@ -319,14 +324,14 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
     try:
         tz = []
         data = await searchMovieMax(f"https://5movierulz.vet/?s={search}")
-#        print(data)
+        #        print(data)
         for dt in data[:3]:
-            print(dt['id'])
+            print(dt["id"])
             tz.append(
                 [
                     InlineKeyboardButton(
                         f"*{dt['title']}* 🈸",
-                        url=f"https://app.switch.click/#/chat/{HUB_BOT}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}"
+                        url=f"https://app.switch.click/#/chat/{HUB_BOT}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}",
                     )
                 ]
             )

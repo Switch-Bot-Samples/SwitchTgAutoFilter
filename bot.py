@@ -37,27 +37,29 @@ log = logging.getLogger(__name__)
 
 if not app._register_commands:
     app.set_bot_commands(
-    [
-        RegisterCommand("start", "Show help about commands", True),
-        # help
-        RegisterCommand("miniapp", "Open APP", True),
-        RegisterCommand("verify", "Verify your telegram account", True),
-        RegisterCommand("stream", "Stream movie from link", True),
-        # imdb
-        RegisterCommand("json", "Prints the message json", True),
-        #       RegisterCommand("buttons", "Shows buttons", True),0
-        # media
-        RegisterCommand("search", "Search for indexed media", True),
-        RegisterCommand("movie", "Search for a movie on IMDb", True),
-        # filters
-        RegisterCommand("addfilter", "Add a filter", True),
-        RegisterCommand("index", "Index current channel or group (OWNER ONLY)", True),
-        RegisterCommand("deleteall", "Delete all indexed (OWNER ONLY)", True),
-        RegisterCommand("listfilters", "List all filters", True),
-        RegisterCommand("delfilter", "Delete a filter", True),
-        RegisterCommand("delallfilters", "Delete all filters", True),
-    ]
-)
+        [
+            RegisterCommand("start", "Show help about commands", True),
+            # help
+            RegisterCommand("miniapp", "Open APP", True),
+            RegisterCommand("verify", "Verify your telegram account", True),
+            RegisterCommand("stream", "Stream movie from link", True),
+            # imdb
+            RegisterCommand("json", "Prints the message json", True),
+            #       RegisterCommand("buttons", "Shows buttons", True),0
+            # media
+            RegisterCommand("search", "Search for indexed media", True),
+            RegisterCommand("movie", "Search for a movie on IMDb", True),
+            # filters
+            RegisterCommand("addfilter", "Add a filter", True),
+            RegisterCommand(
+                "index", "Index current channel or group (OWNER ONLY)", True
+            ),
+            RegisterCommand("deleteall", "Delete all indexed (OWNER ONLY)", True),
+            RegisterCommand("listfilters", "List all filters", True),
+            RegisterCommand("delfilter", "Delete a filter", True),
+            RegisterCommand("delallfilters", "Delete all filters", True),
+        ]
+    )
 
 print(app._register_commands)
 load_modules("plugins")
@@ -106,7 +108,14 @@ async def start(ctx: BotContext[CommandEvent]):
                 f"{media.description or media.file_name}",
                 media_info=media,
                 inline_markup=InlineMarkup(
-                    [[InlineKeyboardButton("Direct Download", url=media.url)]]
+                    [
+                        [InlineKeyboardButton("Direct Download", url=media.url)],
+                        [
+                            InlineKeyboardButton(
+                                "Stream file", callback_data=f"vfile|{mId}"
+                            )
+                        ],
+                    ]
                 ),
             )
         except Exception as er:
@@ -145,7 +154,7 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(app.start())
 
 tgclient.start()
-#loop.create_task(bt.start())
+# loop.create_task(bt.start())
 
-#loop.run_forever()
+# loop.run_forever()
 bt.run()
