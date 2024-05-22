@@ -1,0 +1,13 @@
+python-dotenv
+PyYAML
+IMDbPY
+swibots
+pymongo
+umongo
+motor
+rapidfuzz
+aiohttp
+aiohttp-client-cache
+aniparse
+guessit
+apscheduler

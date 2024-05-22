@@ -1,0 +1,13 @@
+autofilter*-venv
+.log
+__pycache__
+.DS_Store
+**.env
+venv
+*.log
+*.pycgit
+
+downloads/
+tmp/
+*.session*
+*sqlite
