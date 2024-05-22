@@ -3,7 +3,7 @@ from swibots import *
 from swdatabase.ia_filterdb import get_search_results, get_file_details, getMovie
 from guessit import guessit
 from config import DISABLE_FORCE
-
+from common import SW_COMMUNITY
 
 def humanbytes(size):
     if not size:
@@ -20,14 +20,13 @@ def humanbytes(size):
 
 
 async def showJoinPage(ctx: BotContext[CallbackQueryEvent]):
-    return True
     if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
         comps = [
             Text(
                 f"🤖 Please join below community in order to use this bot!",
                 TextSize.SMALL,
             ),
-            Button("Join Community", url="https://iswitch.click/tamil_links_official"),
+            Button("Join Community", url=f"https://app.switch.click/#/open/{SW_COMMUNITY}"),
             Spacer(y=20),
             Text("After joining, reopen the app to perform any action!")
         ]
