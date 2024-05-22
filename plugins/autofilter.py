@@ -12,7 +12,7 @@ from swibots import (
     MessageEvent,
     Media,
 )
-from config import ADMINS, CHATS, COMMUNITIES
+from config import ADMINS, CHATS, COMMUNITIES, INDEX_COMMUNITY_ID, INDEX_CHANNEL_ID
 from swutils import parser, split_quotes, get_channel_or_group
 from swdatabase.ia_filterdb import save_file
 from client import app
@@ -305,9 +305,7 @@ lastIndex = None
 async def addFetchJob():
     global lastIndex
     messages = await app.get_channel_chat_history(
-        "f1cc5c4e-8261-4648-bdd8-8117b95e17d3",
-        "f3e84153-b33a-4c61-9156-3166aba407ec",
-        page_limit=50
+        INDEX_COMMUNITY_ID, INDEX_CHANNEL_ID, page_limit=50
     )
     for message in messages.messages:
         if lastIndex and message.id < lastIndex:
@@ -320,6 +318,8 @@ async def addFetchJob():
     if messages.messages:
         lastIndex = messages.messages[0].id
 
-# sched = AsyncIOScheduler()
-# sched.add_job(addFetchJob, "interval", minutes=3)
-# sched.start()
+
+if INDEX_COMMUNITY_ID and INDEX_CHANNEL_ID:
+    sched = AsyncIOScheduler()
+    sched.add_job(addFetchJob, "interval", minutes=3)
+    sched.start()

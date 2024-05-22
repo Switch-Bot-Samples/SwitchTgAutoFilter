@@ -25,15 +25,12 @@ from base64 import urlsafe_b64encode
 
 # from rapidfuzz.fuzz import token_ratio
 
-from config import ADMINS, CUSTOM_FILE_CAPTION
+from config import ADMINS, CUSTOM_FILE_CAPTION, MOVIEHUB, MOVIEFLIX
 from swibots import Media as SwiMedia
 import logging
 from client import app
 
 lock = asyncio.Lock()
-
-HUB_BOT = "moviemax_bot"
-FLIX_BOT = "movieflix_bot"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -218,8 +215,11 @@ async def listenCallback(ctx: BotContext[CallbackQueryEvent]):
         inline_markup=InlineMarkup(
             [
                 [InlineKeyboardButton("Direct Download", url=file.file_url)],
-                [InlineKeyboardButton("Stream file", callback_data=f"vfile|{data}")
-                 ],
+                [
+                    InlineKeyboardButton(
+                        "Stream file", callback_data=f"vfile|{data}"
+                    )
+                ],
             ]
         ),
     )
@@ -295,63 +295,66 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                 )
             ]
         )
+    count = len(results)
 
-    try:
-        tz = []
-        url = f"https://api.themoviedb.org/3/search/movie?query={search.replace(' ', '+')}&include_adult=false&language=en-US&page=1"
-        data = await make_request(url)
-        for move in data["results"][:3]:
-            tz.append(
-                [
-                    InlineKeyboardButton(
-                        f"*{move['title']}* 🈸",
-                        url=f"https://app.switch.click/#/chat/{FLIX_BOT}?frommovielink={urlsafe_b64encode(str(move['id']).encode()).decode()}",
-                    )
-                ]
-            )
-        if tz:
-            results.append(
-                [
-                    InlineKeyboardButton(
-                        "*--- MoviesFlix 🅰️ ---*",
-                    )
-                ]
-            )
-            results.extend(tz)
-    except Exception as er:
-        print(er)
+    if MOVIEFLIX:
+        try:
+            tz = []
+            url = f"https://api.themoviedb.org/3/search/movie?query={search.replace(' ', '+')}&include_adult=false&language=en-US&page=1"
+            data = await make_request(url)
+            for move in data["results"][:3]:
+                count += 1
+                tz.append(
+                    [
+                        InlineKeyboardButton(
+                            f"*{move['title']}* 🈸",
+                            url=f"https://app.switch.click/#/chat/{MOVIEFLIX}?frommovielink={urlsafe_b64encode(str(move['id']).encode()).decode()}",
+                        )
+                    ]
+                )
+            if tz:
+                results.append(
+                    [
+                        InlineKeyboardButton(
+                            "*--- MoviesFlix 🅰️ ---*",
+                        )
+                    ]
+                )
+                results.extend(tz)
+        except Exception as er:
+            print(er)
+    if MOVIEHUB:
+        try:
+            tz = []
+            data = await searchMovieMax(f"https://5movierulz.vet/?s={search}")
+            #        print(data)
+            for dt in data[:3]:
+                count += 1
+                tz.append(
+                    [
+                        InlineKeyboardButton(
+                            f"*{dt['title']}* 🈸",
+                            url=f"https://app.switch.click/#/chat/{MOVIEHUB}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}",
+                        )
+                    ]
+                )
+            if tz:
+                print(tz)
+                results.append(
+                    [
+                        InlineKeyboardButton(
+                            "*---MoviesMax 🅰️ ---*",
+                        )
+                    ]
+                )
+                results.extend(tz)
 
-    try:
-        tz = []
-        data = await searchMovieMax(f"https://5movierulz.vet/?s={search}")
-        #        print(data)
-        for dt in data[:3]:
-            print(dt["id"])
-            tz.append(
-                [
-                    InlineKeyboardButton(
-                        f"*{dt['title']}* 🈸",
-                        url=f"https://app.switch.click/#/chat/{HUB_BOT}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}",
-                    )
-                ]
-            )
-        if tz:
-            print(tz)
-            results.append(
-                [
-                    InlineKeyboardButton(
-                        "*---MoviesMax 🅰️ ---*",
-                    )
-                ]
-            )
-            results.extend(tz)
-
-    except Exception as er:
-        logger.error("error on movie max")
-        logger.exception(er)
+        except Exception as er:
+            logger.error("error on movie max")
+            logger.exception(er)
 
     if results:
-        pm_text = f"📁 Results - {len(results)}"
+        pm_text = f"📁 Results - {count}"
         if string:
             pm_text += f" for {string}"
         try:

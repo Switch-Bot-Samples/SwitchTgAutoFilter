@@ -61,6 +61,10 @@ async def onFile(ctx: BotContext[CallbackQueryEvent]):
 @app.on_command("stream")
 async def streamFile(ctx: BotContext[CommandEvent]):
     fileId = ctx.event.params
+    try:
+        await ctx.event.message.delete()
+    except Exception as er:
+        pass
     if not fileId:
         await ctx.event.message.reply_text("Invalid file id!")
         return
