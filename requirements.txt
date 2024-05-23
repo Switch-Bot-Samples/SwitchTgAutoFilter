@@ -10,4 +10,8 @@ aiohttp
 aiohttp-client-cache
 aniparse
 guessit
+pyrogram
+bs4
+requests
 apscheduler
+psutil
