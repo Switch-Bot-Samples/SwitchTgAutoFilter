@@ -82,6 +82,6 @@ LOG_MSG = "{} Iꜱ Rᴇsᴛᴀʀᴛᴇᴅ....✨\n\n🗓️ Dᴀᴛᴇ : {}\n⏰
 
 
 
-
+TG_NO_VERIFY = is_enabled(environ.get('TG_NO_VERIFY', "False"), False)
 
 

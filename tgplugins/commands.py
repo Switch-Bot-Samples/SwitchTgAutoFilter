@@ -21,6 +21,7 @@ from tgconfig import (
     START_MESSAGE,
     FORCE_SUB_TEXT,
     SUPPORT_CHAT,
+    TG_NO_VERIFY
 )
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
@@ -396,24 +397,25 @@ async def start(client: Client, message: Message):
         return await message.reply("NO SUCH FILE EXIST...")
 
     files = files_[0]
-    from tgplugins.query import validateSwitchVerify, sendVerifyMessage
+    if not TG_NO_VERIFY:
+        from tgplugins.query import validateSwitchVerify, sendVerifyMessage
 
-    validated = validateSwitchVerify(message.from_user.id)
-    try:
-        await message.delete()
-    except Exception as eR:
-        pass
-    title = files.file_name
-    size = get_size(files.file_size)
+        validated = validateSwitchVerify(message.from_user.id)
+        try:
+            await message.delete()
+        except Exception as eR:
+            pass
+        title = files.file_name
+        size = get_size(files.file_size)
 
-    if not validated:
-        await sendVerifyMessage(client, message.from_user.id, message.from_user.first_name, file_id, files)
-        if newUser:
-            await client.send_message(
-                LOG_CHANNEL,
-                f"""{message.from_user.mention} #SearchedFor {title} {size} |[{file_id}]""",
-            )
-        return
+        if not validated:
+            await sendVerifyMessage(client, message.from_user.id, message.from_user.first_name, file_id, files)
+            if newUser:
+                await client.send_message(
+                    LOG_CHANNEL,
+                    f"""{message.from_user.mention} #SearchedFor {title} {size} |[{file_id}]""",
+                )
+            return
 
     f_caption = files.caption
     if CUSTOM_FILE_CAPTION:
