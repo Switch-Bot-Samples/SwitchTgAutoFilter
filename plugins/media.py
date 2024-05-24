@@ -13,6 +13,7 @@ from swibots import (
     Group,
     Channel,
     CallbackQueryEvent,
+    regexp,
 )
 from bs4 import BeautifulSoup as soup
 from swdatabase.ia_filterdb import save_file, Media, get_search_results, make_request
@@ -134,7 +135,108 @@ async def index_channel(ctx: BotContext[CommandEvent]):
     )
 
 
-@app.on_command(["deleteall"])
+Client = app
+
+
+@Client.on_command("deletefiles", filters.user(ADMINS))
+async def deletefiles(ctx: BotContext[CommandEvent]):
+    message = ctx.event.message
+    try:
+        query = message.message.split(maxsplit=1)[1]
+    except Exception as er:
+        await message.reply_text("Provide search query...")
+        return
+    if not query:
+        raw_pattern = "."
+    elif " " not in query:
+        raw_pattern = r"(\b|[\.\+\-_])" + query + r"(\b|[\.\+\-_])"
+    else:
+        raw_pattern = query.replace(" ", r".*[\s\.\+\-_]")
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        await message.reply_text("Something went wrong!")
+        return
+    filter = {"$or": [{"description": regex}]}
+
+    cursor = await Media.count_documents(filter)
+    await message.reply_text(
+        f"*Total {cursor} results found for* {query}\nAre you sure, you want to delete all?",
+        inline_markup=InlineMarkup(
+            [
+                [
+                    InlineKeyboardButton("Yes", callback_data=f"deletefiles|{query}"),
+                    InlineKeyboardButton("No", callback_data="messagedelete"),
+                ]
+            ]
+        ),
+    )
+
+
+@Client.on_callback_query(regexp("messagedelete") & filters.user(ADMINS))
+async def onmessagedel(ctx: BotContext[CallbackQueryEvent]):
+    query = ctx.event
+    await query.message.delete()
+
+
+@Client.on_callback_query(regexp("deletefiles") & filters.user(ADMINS))
+async def onClick(ctx: BotContext[CallbackQueryEvent]):
+    data = ctx.event.callback_data
+    query = data.split("|", maxsplit=1)[1]
+    message = ctx.event.message
+    if not query:
+        raw_pattern = "."
+    elif " " not in query:
+        raw_pattern = r"(\b|[\.\+\-_])" + query + r"(\b|[\.\+\-_])"
+    else:
+        raw_pattern = query.replace(" ", r".*[\s\.\+\-_]")
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        await message.reply_text("Something went wrong!")
+        return
+    filter = {"$or": [{"description": regex}, {"caption": regex}]}
+
+    cursor = Media.find(filter)
+    cursor.sort("$natural", -1)
+    files = await cursor.to_list(length=None)
+
+    totalFiles = len(files)
+    await message.edit_text("Deleting files!!", reply_markup=None)
+    count = 0
+    for media in files:
+        if count % 100 == 0:
+            await message.edit_text(f"Deleted {count}/{totalFiles}!!")
+        file_id = media.file_id
+        file_name = media.description
+
+        result = await Media.collection.delete_one({"_id": file_id})
+        if result.deleted_count:
+            count += 1
+        else:
+            file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+            result = await Media.collection.delete_many(
+                {
+                    "description": file_name,
+                    "file_size": media.file_size,
+                    "mime_type": media.mime_type,
+                }
+            )
+            if result.deleted_count:
+                count += 1
+            else:
+                result = await Media.collection.delete_many(
+                    {
+                        "description": media.description,
+                        "file_size": media.file_size,
+                        "mime_type": media.mime_type,
+                    }
+                )
+    await message.reply_text(f"Successfully deleted {count} files for {query}!")
+    await message.delete()
+
+
+@app.on_command("deleteall")
 async def delete_all(ctx: BotContext[CommandEvent]):
     message = ctx.event.message
 
@@ -215,11 +317,7 @@ async def listenCallback(ctx: BotContext[CallbackQueryEvent]):
         inline_markup=InlineMarkup(
             [
                 [InlineKeyboardButton("Direct Download", url=file.file_url)],
-                [
-                    InlineKeyboardButton(
-                        "Stream file", callback_data=f"vfile|{data}"
-                    )
-                ],
+                [InlineKeyboardButton("Stream file", callback_data=f"vfile|{data}")],
             ]
         ),
     )
@@ -295,7 +393,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                 )
             ]
         )
-    count = len(results)
+    count = total
 
     if MOVIEFLIX:
         try:
@@ -339,7 +437,6 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                     ]
                 )
             if tz:
-                print(tz)
                 results.append(
                     [
                         InlineKeyboardButton(
@@ -357,6 +454,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
         pm_text = f"📁 Results - {count}"
         if string:
             pm_text += f" for {string}"
+        pm_text += f"\nPage: {offset or 1}"
         try:
             if int(offset) > 0 or (next_offset and int(next_offset) < int(total)):
                 pagination = []

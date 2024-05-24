@@ -56,6 +56,9 @@ if not app._register_commands:
             ),
             RegisterCommand("deleteall", "Delete all indexed (OWNER ONLY)", True),
             RegisterCommand("listfilters", "List all filters", True),
+
+            RegisterCommand("deletefiles", "Delete files [OWNER]", True),
+
             RegisterCommand("delfilter", "Delete a filter", True),
             RegisterCommand("delallfilters", "Delete all filters", True),
         ]

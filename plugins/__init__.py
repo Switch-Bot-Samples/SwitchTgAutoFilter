@@ -1,7 +1,21 @@
 import json
 import logging
 from typing import Tuple
-from swibots import BotApp, BotContext, MessageEvent, Message, filters, RestClient, RestResponse, JSONDict, NetworkError, filters, CallbackQueryEvent, CommandEvent, BotCommand as RegisterCommand
+from swibots import (
+    BotApp,
+    BotContext,
+    MessageEvent,
+    Message,
+    filters,
+    RestClient,
+    RestResponse,
+    JSONDict,
+    NetworkError,
+    filters,
+    CallbackQueryEvent,
+    CommandEvent,
+    BotCommand as RegisterCommand,
+)
 
 from config import ADMINS
 
@@ -21,4 +35,3 @@ def parse_response(response: Tuple[int, bytes]) -> RestResponse[JSONDict]:
     if response.is_error:
         raise NetworkError(response.error_message)
     return response
-

@@ -213,7 +213,7 @@ async def autofilter_filter(ctx: BotContext[MessageEvent]):
     name = message.message
     reply_id = message.replied_to_id if message.replied_to_id > 0 else message.id
     keywords = await get_filters(group_id)
-#    print(keywords)
+    #    print(keywords)
     for keyword in reversed(sorted(keywords, key=len)):
         pattern = r"( |^|[^\w])" + re.escape(keyword) + r"( |$|[^\w])"
         print(pattern, name)

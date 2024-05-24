@@ -40,32 +40,32 @@ async def verifyHandler(ctx: BotContext[CommandEvent]):
         await m.reply_text("Verification code expired!")
         return
     userId = int(spliit[1])
-#    print(fileId)
+    #    print(fileId)
     approvedUsers[userId] = time
     s = await m.reply_text(f"{m.user.username}: *Verified successfull*!!")
 
     from database.ia_filterdb import get_file_details
     from utils import get_size
-    
+
     files = await get_file_details(fileId)
-    print(files)
+
     file = files[0]
     title = file.file_name
     try:
         await tgclient.send_message(
-            LOG_CHANNEL, f"**UserID:** {userId} got verified!\n\n**Switch:**  `@{user.username}`\n\n**File:** `{title}`\n#Verified",
+            LOG_CHANNEL,
+            f"**UserID:** {userId} got verified!\n\n**Switch:**  `@{user.username}`\n\n**File:** `{title}`\n#Verified",
         )
     except Exception as er:
         print(er)
+
     size = get_size(file.file_size)
     f_caption = f"[{size}] {title}"
-    await tgclient.send_cached_media(
-        chat_id=userId,
-        file_id=fileId,
-        caption=f_caption
-    )
+    await tgclient.send_cached_media(chat_id=userId, file_id=fileId, caption=f_caption)
     try:
-        await s.edit_text(f"*@{user.username}: Verified successfully!*\nYour file has been sent on telegram!")
+        await s.edit_text(
+            f"*@{user.username}: Verified successfully!*\nYour file has been sent on telegram!"
+        )
     except Exception as er:
         print(er)
         await m.send("Your file has been sent on telegram!")

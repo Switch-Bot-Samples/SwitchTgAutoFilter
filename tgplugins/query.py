@@ -378,8 +378,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 logger.exception(e)
         try:
             return await query.answer(
-                    url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}"
-                )
+                url=f"https://t.me/{temp.U_NAME}?start={ident}_{file_id}"
+            )
         except Exception as e:
             await query.answer(f"⚠️ Eʀʀᴏʀ {e}")
 

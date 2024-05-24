@@ -5,6 +5,7 @@ from guessit import guessit
 from config import DISABLE_FORCE
 from common import SW_COMMUNITY
 
+
 def humanbytes(size):
     if not size:
         return "0 B"
@@ -26,9 +27,11 @@ async def showJoinPage(ctx: BotContext[CallbackQueryEvent]):
                 f"🤖 Please join below community in order to use this bot!",
                 TextSize.SMALL,
             ),
-            Button("Join Community", url=f"https://app.switch.click/#/open/{SW_COMMUNITY}"),
+            Button(
+                "Join Community", url=f"https://app.switch.click/#/open/{SW_COMMUNITY}"
+            ),
             Spacer(y=20),
-            Text("After joining, reopen the app to perform any action!")
+            Text("After joining, reopen the app to perform any action!"),
         ]
         await ctx.event.answer(
             callback=AppPage(
@@ -37,6 +40,7 @@ async def showJoinPage(ctx: BotContext[CallbackQueryEvent]):
         )
         return False
     return True
+
 
 @app.on_callback_query(regexp("blk"))
 async def onFile(ctx: BotContext[CallbackQueryEvent]):
@@ -51,12 +55,12 @@ async def onFile(ctx: BotContext[CallbackQueryEvent]):
         await ctx.event.message.send(
             f"*{file.description}*",
             media_info=file,
-            inline_markup=InlineMarkup([[
-                InlineKeyboardButton("*Download Now*",
-                                     url=file.url)
-            ]])
+            inline_markup=InlineMarkup(
+                [[InlineKeyboardButton("*Download Now*", url=file.url)]]
+            ),
         )
         await ctx.event.answer("File sent to PM!", show_alert=True)
+
 
 @app.on_command("stream")
 async def streamFile(ctx: BotContext[CommandEvent]):
@@ -73,11 +77,13 @@ async def streamFile(ctx: BotContext[CommandEvent]):
         await ctx.event.message.reply_text("File not found!")
         return
     file = files[0]
-    m = await ctx.event.message.reply_text(f"*[{humanbytes(file.file_size)}] {file.description or file.file_name}*\n\nClick below button to stream file!",
-                                           inline_markup=InlineMarkup([[
-                                               InlineKeyboardButton("Open Stream",
-                                                                    callback_data=f"vfile|{fileId}")
-                                           ]]))
+    m = await ctx.event.message.reply_text(
+        f"*[{humanbytes(file.file_size)}] {file.description or file.file_name}*\n\nClick below button to stream file!",
+        inline_markup=InlineMarkup(
+            [[InlineKeyboardButton("Open Stream", callback_data=f"vfile|{fileId}")]]
+        ),
+    )
+
 
 @app.on_callback_query(regexp("vfile"))
 async def showFile(ctx: BotContext[CallbackQueryEvent], fileId=None):

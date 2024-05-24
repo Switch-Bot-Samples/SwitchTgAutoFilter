@@ -21,7 +21,7 @@ from tgconfig import (
     START_MESSAGE,
     FORCE_SUB_TEXT,
     SUPPORT_CHAT,
-    TG_NO_VERIFY
+    TG_NO_VERIFY,
 )
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
@@ -409,7 +409,13 @@ async def start(client: Client, message: Message):
         size = get_size(files.file_size)
 
         if not validated:
-            await sendVerifyMessage(client, message.from_user.id, message.from_user.first_name, file_id, files)
+            await sendVerifyMessage(
+                client,
+                message.from_user.id,
+                message.from_user.first_name,
+                file_id,
+                files,
+            )
             if newUser:
                 await client.send_message(
                     LOG_CHANNEL,
@@ -468,6 +474,98 @@ async def channel_info(bot, message):
             f.write(text)
         await message.reply_document(file)
         os.remove(file)
+
+
+@Client.on_message(filters.command("deletefiles") & filters.user(ADMINS))
+async def deletefiles(bot, message: Message):
+    try:
+        query = message.text.split(maxsplit=1)[1]
+    except Exception as er:
+        await message.reply_text("Provide search query...")
+        return
+    if not query:
+        raw_pattern = "."
+    elif " " not in query:
+        raw_pattern = r"(\b|[\.\+\-_])" + query + r"(\b|[\.\+\-_])"
+    else:
+        raw_pattern = query.replace(" ", r".*[\s\.\+\-_]")
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        await message.reply_text("Something went wrong!")
+        return
+    filter = {"file_name": regex}
+
+    cursor = await Media.count_documents(filter)
+    await message.reply_text(
+        f"**Total {cursor} results found for** {query}\nAre you sure, you want to delete all?",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("Yes", callback_data=f"deletefiles|{query}"),
+                    InlineKeyboardButton("No", callback_data="messagedelete"),
+                ]
+            ]
+        ),
+    )
+
+
+@Client.on_callback_query(filters.regex("messagedelete") & filters.user(ADMINS))
+async def onmessagedel(bot, query):
+    await query.message.delete()
+
+
+@Client.on_callback_query(filters.regex("deletefiles") & filters.user(ADMINS))
+async def onClick(bot, cquery):
+    query = cquery.data.split("|", maxsplit=1)[1]
+    message = cquery.message
+    if not query:
+        raw_pattern = "."
+    elif " " not in query:
+        raw_pattern = r"(\b|[\.\+\-_])" + query + r"(\b|[\.\+\-_])"
+    else:
+        raw_pattern = query.replace(" ", r".*[\s\.\+\-_]")
+    try:
+        regex = re.compile(raw_pattern, flags=re.IGNORECASE)
+    except:
+        await message.reply_text("Something went wrong!")
+        return
+    filter = {"file_name": regex}
+    cursor = Media.find(filter)
+    cursor.sort("$natural", -1)
+    files = await cursor.to_list(length=None)
+    totalFiles = len(files)
+    await message.edit_text("Deleting files!!", reply_markup=None)
+    count = 0
+    for media in files:
+        if count % 100 == 0:
+            await message.edit_text(f"Deleted {count}/{totalFiles}!!")
+        file_id = media.file_id
+        file_name = media.file_name
+        result = await Media.collection.delete_one({"_id": file_id})
+        if result.deleted_count:
+            count += 1
+        else:
+            file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+            result = await Media.collection.delete_many(
+                {
+                    "file_name": file_name,
+                    "file_size": media.file_size,
+                    "mime_type": media.mime_type,
+                }
+            )
+            if result.deleted_count:
+                count += 1
+            else:
+                result = await Media.collection.delete_many(
+                    {
+                        "file_name": media.file_name,
+                        "file_size": media.file_size,
+                        "mime_type": media.mime_type,
+                    }
+                )
+    await message.reply_text(f"Successfully deleted {count} files for {query}!")
+    await message.delete()
 
 
 @Client.on_message(filters.command("delete") & filters.user(ADMINS))
