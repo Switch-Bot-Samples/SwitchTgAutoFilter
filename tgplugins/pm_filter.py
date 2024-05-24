@@ -56,6 +56,16 @@ async def auto_pm_fill(b, m):
         return
 
 
+@Client.on_callback_query(filters.regex("shorturl"))
+async def openShort(bot, query):
+    fileId = query.data.split("|")[-1]
+    await query.answer(
+        url=await get_shortlink(
+                            f"https://telegram.dog/{temp.U_NAME}?start=files_{fileId}"
+        )
+    )
+
+
 @Client.on_callback_query(
     filters.create(lambda _, __, query: query.data.startswith("pmnext"))
 )
@@ -88,9 +98,7 @@ async def pm_next_page(bot, query):
                 [
                     InlineKeyboardButton(
                         text=f"[{get_size(file.file_size)}] {file.file_name}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}"
-                        ),
+                        callback_data=f"shorturl|{file.file_id}"
                     )
                 ]
                 for file in files
@@ -100,15 +108,12 @@ async def pm_next_page(bot, query):
                 [
                     InlineKeyboardButton(
                         text=f"{file.file_name}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}"
-                        ),
+                        callback_data=f"shorturl|{file.file_id}"
                     ),
                     InlineKeyboardButton(
                         text=f"{get_size(file.file_size)}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}"
-                        ),
+                                              callback_data=f"shorturl|{file.file_id}"
+
                     ),
                 ]
                 for file in files
@@ -245,9 +250,8 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 [
                     InlineKeyboardButton(
                         text=f"[{get_size(file.file_size)}] {file.file_name}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=pre_{file.file_id}"
-                        ),
+                                                callback_data=f"shorturl|{file.file_id}"
+
                     )
                 ]
                 for file in files
@@ -257,15 +261,13 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 [
                     InlineKeyboardButton(
                         text=f"{file.file_name}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=pre_{file.file_id}"
-                        ),
+                                               callback_data=f"shorturl|{file.file_id}"
+
                     ),
                     InlineKeyboardButton(
                         text=f"{get_size(file.file_size)}",
-                        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=pre_{file.file_id}"
-                        ),
+                                              callback_data=f"shorturl|{file.file_id}"
+
                     ),
                 ]
                 for file in files
