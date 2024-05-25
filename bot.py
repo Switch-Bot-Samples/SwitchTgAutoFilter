@@ -95,10 +95,12 @@ async def start(ctx: BotContext[CommandEvent]):
     mId = ctx.event.params
     message: Message = ctx.event.message
     if mId and mId.isdigit():
+        proc = await message.reply_text("Processing...")
         if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
-            await message.send(
+            await message.reply_text(
                 f"🔮 *Please join below community in order to use this bot!*\n\nhttps://iswitch.click/{SW_COMMUNITY}"
             )
+            await proc.delete()
             return
         try:
             media = await app.get_media(mId)
@@ -119,7 +121,8 @@ async def start(ctx: BotContext[CommandEvent]):
             )
         except Exception as er:
             print(er, mId)
-            await message.send(f"Media not found!")
+            await message.reply_text(f"Media not found!")
+        await proc.delete()
         return
     text = (
         "Hello! here is a list of commands you can use:\n"
