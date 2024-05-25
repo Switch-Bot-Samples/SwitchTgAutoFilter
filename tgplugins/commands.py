@@ -424,6 +424,8 @@ async def start(client: Client, message: Message):
             return
 
     f_caption = files.caption
+    title = files.file_name
+    size = get_size(file.file_size)
     if CUSTOM_FILE_CAPTION:
         try:
             f_caption = CUSTOM_FILE_CAPTION.format(
