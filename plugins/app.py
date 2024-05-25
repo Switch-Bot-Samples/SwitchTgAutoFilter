@@ -28,7 +28,7 @@ async def showJoinPage(ctx: BotContext[CallbackQueryEvent]):
                 TextSize.SMALL,
             ),
             Button(
-                "Join Community", url=f"https://app.switch.click/#/open/{SW_COMMUNITY}"
+                "Join Community", url=f"https://iswitch.click/{SW_COMMUNITY}"
             ),
             Spacer(y=20),
             Text("After joining, reopen the app to perform any action!"),

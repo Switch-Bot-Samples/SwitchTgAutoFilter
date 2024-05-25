@@ -386,7 +386,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
             [
                 InlineKeyboardButton(
                     f"*[{size}] {file.description}*",
-                    url=f"https://app.switch.click/#/chat/{app.user.user_name}?start={file.file_id}",
+                    url=f"https://iswitch.click/{app.user.user_name}?start={file.file_id}",
                     #                callback_data=f"blk_{file.file_id}"
                     # text=f'📁 Name: {f_caption} Size: {get_size(file.file_size)}\nType: {file_str_from_int(file.file_type)}',
                     # url=file.file_url
@@ -406,7 +406,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                     [
                         InlineKeyboardButton(
                             f"*{move['title']}* 🈸",
-                            url=f"https://app.switch.click/#/chat/{MOVIEFLIX}?frommovielink={urlsafe_b64encode(str(move['id']).encode()).decode()}",
+                            url=f"https://iswitch.click/{MOVIEFLIX}?frommovielink={urlsafe_b64encode(str(move['id']).encode()).decode()}",
                         )
                     ]
                 )
@@ -432,7 +432,7 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
                     [
                         InlineKeyboardButton(
                             f"*{dt['title']}* 🈸",
-                            url=f"https://app.switch.click/#/chat/{MOVIEHUB}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}",
+                            url=f"https://iswitch.click/{MOVIEHUB}?frommovielink={urlsafe_b64encode(str(dt['id']).encode()).decode()}",
                         )
                     ]
                 )

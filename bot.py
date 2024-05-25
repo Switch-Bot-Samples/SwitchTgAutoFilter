@@ -79,7 +79,7 @@ async def start(ctx: BotContext[CommandEvent]):
     mId = ctx.event.message
     if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
         await ctx.event.message.send(
-            f"🔮 *Please join below community in order to use this bot!*\n\nhttps://app.switch.click/#/open/{SW_COMMUNITY}"
+            f"🔮 *Please join below community in order to use this bot!*\n\nhttps://iswitch.click/{SW_COMMUNITY}"
         )
         return
     await mId.reply_text(
@@ -101,7 +101,7 @@ async def start(ctx: BotContext[CommandEvent]):
     if mId and mId.isdigit():
         if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
             await message.send(
-                f"🔮 *Please join below community in order to use this bot!*\n\nhttps://app.switch.click/#/open/{SW_COMMUNITY}"
+                f"🔮 *Please join below community in order to use this bot!*\n\nhttps://iswitch.click/{SW_COMMUNITY}"
             )
             return
         try:
