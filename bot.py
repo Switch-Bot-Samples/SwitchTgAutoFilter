@@ -94,10 +94,6 @@ async def start(ctx: BotContext[CommandEvent]):
 async def start(ctx: BotContext[CommandEvent]):
     mId = ctx.event.params
     message: Message = ctx.event.message
-    try:
-        await message.delete()
-    except Exception as er:
-        print(er)
     if mId and mId.isdigit():
         if not DISABLE_FORCE and not await hasJoined(ctx.event.action_by_id):
             await message.send(
@@ -108,7 +104,7 @@ async def start(ctx: BotContext[CommandEvent]):
             media = await app.get_media(mId)
             media.id = 0
             await message.reply_text(
-                f"{media.description or media.file_name}",
+                f"Hey @{message.user.username}, here is your file!\n\n{media.description or media.file_name}",
                 media_info=media,
                 inline_markup=InlineMarkup(
                     [
