@@ -2,8 +2,9 @@ from client import app, hasJoined
 from swibots import *
 from swdatabase.ia_filterdb import get_search_results, get_file_details, getMovie
 from guessit import guessit
-from config import DISABLE_FORCE
-from common import SW_COMMUNITY, DOMAIN
+from base64 import b16decode
+from config import DISABLE_FORCE, STREAM_URL
+from common import SW_COMMUNITY, DOMAIN, SW_USERNAME
 
 
 def humanbytes(size):
@@ -239,3 +240,55 @@ async def onHome(ctx: BotContext[CallbackQueryEvent]):
         comps.append(Text("Recently Uploaded", TextSize.SMALL))
         comps.append(ListView(gv, ListViewType.LARGE))
     await ctx.event.answer(callback=AppPage(components=comps))
+
+
+@app.on_callback_query(regexp("stream_"))
+async def streamTgFile(ctx: BotContext[CallbackQueryEvent]):
+    hash = ctx.event.callback_data.split("_")[-1]
+    channel, messageId = b16decode(hash.encode()).decode().split(":")
+    from tclient import tgclient
+    from streamer.utils import get_name
+    
+    try:
+        channel = int(channel)
+    except Exception:
+        pass
+    try:
+        message = await tgclient.get_messages(
+            chat_id=channel,
+            message_ids=int(messageId)
+        )
+    except Exception as er:
+        await ctx.event.answer(
+            callback=AppPage(
+                components=[
+                    Text(f"ERROR: {er}")
+                ]
+            )
+        )
+        return 
+    url = f"{STREAM_URL}/stream?hash={hash}"
+    comps = [
+        VideoPlayer(
+            url=url,
+            title=get_name(message)
+        ),
+        ButtonGroup(
+            [
+                ShareButton(
+                    "Share",
+                    share_text=f"{DOMAIN}/{SW_USERNAME}:{ctx.event.callback_data}"
+                ),
+                Button(
+                    "Download",
+                    url=url
+                )
+            ]
+        )
+    ]
+    await ctx.event.answer(
+        callback=AppPage(
+            components=comps
+        ),
+        new_page=True
+    )

@@ -4,9 +4,12 @@ from client import app, hasJoined
 from tgbot import bt
 from tclient import tgclient
 import os
-from config import DISABLE_FORCE
+from config import DISABLE_FORCE, START_SERVER, BIND_ADDRESS, STREAM_PORT
 import swibots
 from common import SW_COMMUNITY
+from streamer import web_server
+from aiohttp.web import TCPSite, AppRunner
+
 from pyrogram import idle
 from loader import load_modules
 
@@ -158,5 +161,17 @@ loop.run_until_complete(app.start())
 tgclient.start()
 # loop.create_task(bt.start())
 
+async def start_web_server():
+    server = AppRunner(web_server())
+
+    await server.setup()
+    await TCPSite(server, BIND_ADDRESS, STREAM_PORT).start()
+    logging.info("Service Started")
+
+if START_SERVER:
+    loop.run_until_complete(start_web_server())
+
+loop.run_until_complete(bt.start())
+idle()
 # loop.run_forever()
-bt.run()
+#bt.run()

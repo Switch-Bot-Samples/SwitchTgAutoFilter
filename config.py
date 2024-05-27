@@ -105,3 +105,9 @@ LOG_STR += (
     else "Full List of casts and crew will be shown in imdb template, restrict them by adding a value to MAX_LIST_ELM\n"
 )
 LOG_STR += f"Your current IMDB template is {IMDB_TEMPLATE}"
+
+
+START_SERVER = is_enabled(environ.get("START_SERVER", "True"), False)
+BIND_ADDRESS = environ.get("BIND_ADDRESS", "0.0.0.0")
+STREAM_PORT = environ.get("STREAM_PORT", "1500")
+STREAM_URL = environ.get("STREAM_URL", "")

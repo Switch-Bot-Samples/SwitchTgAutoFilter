@@ -23,13 +23,29 @@ from tgconfig import (
     SUPPORT_CHAT,
     TG_NO_VERIFY,
 )
+from base64 import b16encode
 from common import DOMAIN
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 from tgconfig import SEND_PM
+from config import START_SERVER
 
 logger = logging.getLogger(__name__)
 BATCH_FILES = {}
+
+
+@Client.on_message(filters.command("getlink") & filters.incoming)
+async def onGetLink(client: Client, message: Message):
+    if not START_SERVER:
+        await message.reply_text(f"This feature is disabled!")
+        return
+    reply = message.reply_to_message
+    if not (reply and reply.media):
+        return await message.reply_text("Please reply to media!")
+    encodeId = f"{reply.chat.id}:{reply.id}"
+    hash = b16encode(encodeId.encode()).decode()
+    url = f"{DOMAIN}/{SW_USERNAME}:stream_{hash}"
+    await message.reply_text(f"**Here is your stream link!**\n\n{url}")
 
 
 @Client.on_message(filters.command("start") & filters.incoming)
