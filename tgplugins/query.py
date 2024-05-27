@@ -42,10 +42,9 @@ from common import (
     SW_USERNAME,
     pHash,
     SW_GROUP_ID,
-    SW_IS_CHANNEL,
     SW_COMMUNITY,
 )
-
+from tgconfig import SEND_PM
 
 # Database Function
 from database.connections_mdb import (
@@ -117,11 +116,12 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
     encodeId = (
         urlsafe_b64encode(f"{fileId}|{userId}|{now}".encode()).decode().rstrip("=")
     )
-    verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
-    verifyLink += f"&name={quote(name)}"
-    if SW_IS_CHANNEL:
-        verifyLink += "&is_channel=true"
-    print(verifyLink, SW_IS_CHANNEL)
+    if SEND_PM:
+            verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?verify={encodeId}"
+    else:
+        verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+        verifyLink += f"&name={quote(name)}"
+    print(verifyLink)
     msg = await client.send_message(
         userId,
         f"""
@@ -348,6 +348,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                                     f"⚡Get link",
                                     url=f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}",
                                 ),
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    f"⚡How To Download",
+                                    url=f"https://t.me/tgtamillinks/49",
+                                ),
                             ]
                         ]
                     ),
@@ -455,29 +461,19 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data == "howdl":
         try:
             global cacheHowTO
-            markup = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "Contact Admins", url="https://t.me/trishaAdmin_bot"
-                        )
-                    ]
-                ]
-            )
+           
 
             if cacheHowTO:
                 await client.send_cached_media(
                     chat_id=query.from_user.id,
                     file_id=cacheHowTO,
                     caption="**How to verify self and get file easily!!**",
-                    reply_markup=markup,
                 )
             else:
                 video = await client.send_video(
                     chat_id=query.from_user.id,
                     video="howtodl.mp4",
                     caption="**How to verify self and get file easily!!**",
-                    reply_markup=markup,
                 )
                 cacheHowTO = video.video.file_id
                 print(cacheHowTO)

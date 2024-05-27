@@ -121,7 +121,8 @@ async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
     if int(req) not in [query.from_user.id, 0]:
         return await query.answer(
-            BUTTON_LOCK_TEXT.format(query.from_user.first_name), show_alert=True
+            BUTTON_LOCK_TEXT.format(query.from_user.first_name,
+                                    query=""), show_alert=True
         )
     try:
         offset = int(offset)
@@ -200,7 +201,7 @@ async def next_page(bot, query):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", "howdl")])
+    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
     if 0 < offset <= 10:
         off_set = 0
     elif offset == 0:
@@ -393,7 +394,7 @@ async def auto_filter(client, msg, spoll=False):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", "howdl")])
+    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
     if offset != "":
         key = f"{message.chat.id}-{message.id}"
         temp.GP_BUTTONS[key] = search

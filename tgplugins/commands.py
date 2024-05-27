@@ -26,6 +26,7 @@ from tgconfig import (
 from common import DOMAIN
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
+from tgconfig import SEND_PM
 
 logger = logging.getLogger(__name__)
 BATCH_FILES = {}
@@ -74,6 +75,7 @@ async def start(client: Client, message: Message):
         return
     newUser = not await db.is_user_exist(message.from_user.id)
     if newUser:
+        """
         try:
             await message.reply_cached_media(
                 file_id="BAACAgEAAxkDAAIyg2Y8nsXxJpmxBNOwnVFeLppYWnlzAALwjAAC2XLoRSle5PRl-jCPHgQ",
@@ -90,6 +92,7 @@ async def start(client: Client, message: Message):
             )
         except Exception as er:
             print(er)
+        """
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(
             LOG_CHANNEL,
@@ -121,8 +124,8 @@ async def start(client: Client, message: Message):
             "CAACAgUAAxkBAAEBvlVk7YKnYxIHVnKW2PUwoibIR2ygGAACBAADwSQxMYnlHW4Ls8gQHgQ"
         )
         await asyncio.sleep(2)
-        await message.reply_text(
-            text=START_MESSAGE.format(
+        await message.reply_photo( photo=random.choice(PICS),
+            caption=START_MESSAGE.format(
                 user=message.from_user.mention, bot=client.mention
             ),
             reply_markup=InlineKeyboardMarkup(buttons),
@@ -201,7 +204,6 @@ async def start(client: Client, message: Message):
         m = await message.reply_sticker(
             "CAACAgUAAxkBAAEBvlVk7YKnYxIHVnKW2PUwoibIR2ygGAACBAADwSQxMYnlHW4Ls8gQHgQ"
         )
-        await asyncio.sleep(2)
         await message.reply_photo(
             photo=random.choice(PICS),
             caption=START_MESSAGE.format(
@@ -341,10 +343,11 @@ async def start(client: Client, message: Message):
 
     if file_id.isdigit():
         details = await switch_file_details(file_id)
-        verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
-        verifyLink += f"&name={quote(message.from_user.first_name)}"
-        if SW_IS_CHANNEL:
-            verifyLink += "&is_channel=true"
+        if SEND_PM:
+            verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}"
+        else:
+            verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+            verifyLink += f"&name={quote(message.from_user.first_name)}"
         file = details[0]
         await client.send_message(
             chat_id=message.from_user.id,
@@ -356,7 +359,13 @@ async def start(client: Client, message: Message):
                             f"⚡Get link",
                             url=verifyLink,
                         ),
-                    ]
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            f"⚡How To Download",
+                            url=f"https://t.me/tgtamillinks/49",
+                        ),
+                    ],
                 ]
             ),
             disable_web_page_preview=True,

@@ -143,7 +143,7 @@ async def pm_next_page(bot, query):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", "howdl")])
+    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
     if 0 < offset <= 10:
         off_set = 0
     elif offset == 0:
@@ -298,7 +298,7 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", "howdl")])
+    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
     if offset != "":
         key = f"{message.id}"
         temp.PM_BUTTONS[key] = search

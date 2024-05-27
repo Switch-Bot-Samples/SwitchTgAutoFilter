@@ -1,5 +1,6 @@
 python-dotenv
 PyYAML
+aiosqlite
 IMDbPY
 swibots
 pymongo[srv]
@@ -15,4 +16,3 @@ bs4
 requests
 apscheduler
 psutil
-aiosqlite

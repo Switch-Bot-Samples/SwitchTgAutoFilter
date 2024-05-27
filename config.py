@@ -41,8 +41,8 @@ COLLECTION_NAME = environ.get("COLLECTION_NAME", "switch_files")
 
 MOVIEHUB = environ.get("MOVIEHUB", "")
 MOVIEFLIX = environ.get("MOVIEFLIX", "")
-INDEX_COMMUNITY_ID = environ.get("INDEX_COMMUNITY", "")
-INDEX_CHANNEL_ID = environ.get("INDEX_CHANNEL", "")
+INDEX_COMMUNITY_ID = environ.get("INDEX_COMMUNITY_ID", "")
+INDEX_CHANNEL_ID = environ.get("INDEX_CHANNEL_ID", "")
 
 
 # Others

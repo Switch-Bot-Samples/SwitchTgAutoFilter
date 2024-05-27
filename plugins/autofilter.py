@@ -303,9 +303,10 @@ lastIndex = None
 
 
 async def addFetchJob():
+    print("adding files to index")
     global lastIndex
     messages = await app.get_channel_chat_history(
-        INDEX_COMMUNITY_ID, INDEX_CHANNEL_ID, page_limit=50
+        INDEX_CHANNEL_ID,INDEX_COMMUNITY_ID, page_limit=50
     )
     for message in messages.messages:
         if lastIndex and message.id < lastIndex:

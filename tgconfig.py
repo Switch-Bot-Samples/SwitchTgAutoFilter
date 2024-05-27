@@ -53,6 +53,8 @@ PMFILTER = is_enabled(environ.get('PMFILTER', "True"), True)
 G_FILTER = is_enabled(environ.get("G_FILTER", "True"), True)
 BUTTON_LOCK = is_enabled(environ.get("BUTTON_LOCK", "True"), True)
 RemoveBG_API = environ.get("RemoveBG_API", "")
+SEND_PM = is_enabled(environ.get("SEND_PM", "false"), False)
+
 
 # url shortner
 SHORT_URL = environ.get("SHORT_URL")
