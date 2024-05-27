@@ -244,6 +244,8 @@ async def onHome(ctx: BotContext[CallbackQueryEvent]):
 
 @app.on_callback_query(regexp("stream_"))
 async def streamTgFile(ctx: BotContext[CallbackQueryEvent]):
+    if not await showJoinPage(ctx):
+        return
     hash = ctx.event.callback_data.split("_")[-1]
     channel, messageId = b16decode(hash.encode()).decode().split(":")
     from tclient import tgclient

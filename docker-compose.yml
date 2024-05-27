@@ -5,3 +5,5 @@ services:
     build: .
     command: python3 bot.py
     restart: on-failure
+    ports:
+      - "8048:2112"
