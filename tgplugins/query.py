@@ -17,6 +17,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid
 from base64 import urlsafe_b64encode
 from swdatabase.ia_filterdb import get_file_details as switch_file_details
+from common import DOMAIN
 
 # Helper Function
 from Script import script
@@ -41,6 +42,7 @@ from common import (
     SW_USERNAME,
     pHash,
     SW_GROUP_ID,
+    SW_IS_CHANNEL,
     SW_COMMUNITY,
 )
 
@@ -115,9 +117,11 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
     encodeId = (
         urlsafe_b64encode(f"{fileId}|{userId}|{now}".encode()).decode().rstrip("=")
     )
-    verifyLink = f"https://app.switch.click/#/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+    verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
     verifyLink += f"&name={quote(name)}"
-    print(verifyLink)
+    if SW_IS_CHANNEL:
+        verifyLink += "&is_channel=true"
+    print(verifyLink, SW_IS_CHANNEL)
     msg = await client.send_message(
         userId,
         f"""
@@ -326,7 +330,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             try:
                 await client.send_message(
                     chat_id=query.from_user.id,
-                    text=f"**{get_size(file.file_size)} | [{file.description}](https://app.switch.click/#/chat/{SW_USERNAME}?start={file_id})**\n\nClick below url to get your movie!",
+                    text=f"**{get_size(file.file_size)} | [{file.description}]({DOMAIN}/chat/{SW_USERNAME}?start={file_id})**\n\nClick below url to get your movie!",
                     reply_markup=InlineKeyboardMarkup(
                         [
                             # [
@@ -342,7 +346,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                             [
                                 InlineKeyboardButton(
                                     f"⚡Get link",
-                                    url=f"https://app.switch.click/#/chat/{SW_USERNAME}?start={file_id}",
+                                    url=f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}",
                                 ),
                             ]
                         ]

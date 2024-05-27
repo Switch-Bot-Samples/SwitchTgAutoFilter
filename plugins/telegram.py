@@ -13,10 +13,6 @@ from tgconfig import LOG_CHANNEL
 @app.on_command("verify")
 async def verifyHandler(ctx: BotContext[CommandEvent]):
     m = ctx.event.message
-    try:
-        await m.delete()
-    except Exception as er:
-        print(er)
     param = ctx.event.params
     user = m.user
     logging.info(ctx)

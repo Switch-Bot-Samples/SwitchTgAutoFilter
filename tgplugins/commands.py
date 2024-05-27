@@ -23,6 +23,7 @@ from tgconfig import (
     SUPPORT_CHAT,
     TG_NO_VERIFY,
 )
+from common import DOMAIN
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 
@@ -340,8 +341,10 @@ async def start(client: Client, message: Message):
 
     if file_id.isdigit():
         details = await switch_file_details(file_id)
-        verifyLink = f"https://app.switch.click/#/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+        verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
         verifyLink += f"&name={quote(message.from_user.first_name)}"
+        if SW_IS_CHANNEL:
+            verifyLink += "&is_channel=true"
         file = details[0]
         await client.send_message(
             chat_id=message.from_user.id,
@@ -425,7 +428,7 @@ async def start(client: Client, message: Message):
 
     f_caption = files.caption
     title = files.file_name
-    size = get_size(file.file_size)
+    size = get_size(files.file_size)
     if CUSTOM_FILE_CAPTION:
         try:
             f_caption = CUSTOM_FILE_CAPTION.format(

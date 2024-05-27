@@ -3,7 +3,7 @@ from swibots import *
 from swdatabase.ia_filterdb import get_search_results, get_file_details, getMovie
 from guessit import guessit
 from config import DISABLE_FORCE
-from common import SW_COMMUNITY
+from common import SW_COMMUNITY, DOMAIN
 
 
 def humanbytes(size):
@@ -65,10 +65,6 @@ async def onFile(ctx: BotContext[CallbackQueryEvent]):
 @app.on_command("stream")
 async def streamFile(ctx: BotContext[CommandEvent]):
     fileId = ctx.event.params
-    try:
-        await ctx.event.message.delete()
-    except Exception as er:
-        pass
     if not fileId:
         await ctx.event.message.reply_text("Invalid file id!")
         return
@@ -132,7 +128,7 @@ async def showFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
                 Button("Get File", callback_data=f"blk_{fileId}"),
                 ShareButton(
                     "Share file",
-                    share_text=f"https://app.switch.click/#/chat/{ctx.user.user_name}?stream={fileId}",
+                    share_text=f"{DOMAIN}/chat/{ctx.user.user_name}?stream={fileId}",
                 ),
             ]
         ),
