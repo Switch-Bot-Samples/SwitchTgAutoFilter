@@ -117,7 +117,7 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
         urlsafe_b64encode(f"{fileId}|{userId}|{now}".encode()).decode().rstrip("=")
     )
     if SEND_PM:
-            verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?verify={encodeId}"
+        verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?verify={encodeId}"
     else:
         verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
         verifyLink += f"&name={quote(name)}"
@@ -325,45 +325,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
     if query.data.startswith("pmfile"):
         ident, file_id = query.data.split("#")
         if file_id.isdigit():
-            details = await switch_file_details(file_id)
-            file = details[0]
-            try:
-                await client.send_message(
-                    chat_id=query.from_user.id,
-                    text=f"**{get_size(file.file_size)} | [{file.description}]({DOMAIN}/chat/{SW_USERNAME}?start={file_id})**\n\nClick below url to get your movie!",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            # [
-                            #     InlineKeyboardButton(
-                            #         "🛜 Link 1 [Web]",
-                            #         callback_data=f"https://app.switch.click/#/{SW_USERNAME}?start={file_id}",
-                            #     ),
-                            #     InlineKeyboardButton(
-                            #         "Link 2 [App] 📶",
-                            #         url=f"https://iswitch.click/{SW_USERNAME}?start={file_id}",
-                            #     ),
-                            # ],
-                            [
-                                InlineKeyboardButton(
-                                    f"⚡Get link",
-                                    url=f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}",
-                                ),
-                            ],
-                            [
-                                InlineKeyboardButton(
-                                    f"⚡How To Download",
-                                    url=f"https://t.me/tgtamillinks/49",
-                                ),
-                            ]
-                        ]
-                    ),
-                    disable_web_page_preview=True,
-                )
-            except PeerIdInvalid:
-                await query.answer(
-                    f"Please unblock the bot to receive files!", show_alert=True
-                )
-                return
             await query.answer(
                 url="https://t.me/{}?start={}".format(temp.U_NAME, file_id)
             )
@@ -461,7 +422,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data == "howdl":
         try:
             global cacheHowTO
-           
 
             if cacheHowTO:
                 await client.send_cached_media(
