@@ -60,9 +60,7 @@ async def auto_pm_fill(b, m):
 async def openShort(bot, query):
     fileId = query.data.split("|")[-1]
     await query.answer(
-        url=await get_shortlink(
-                            f"https://telegram.dog/{temp.U_NAME}?start=files_{fileId}"
-        )
+        url=f"https://telegram.dog/{temp.U_NAME}?start=files_{fileId}"
     )
 
 
