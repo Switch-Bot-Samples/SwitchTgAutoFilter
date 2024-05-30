@@ -117,9 +117,9 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
         urlsafe_b64encode(f"{fileId}|{userId}|{now}".encode()).decode().rstrip("=")
     )
     if SEND_PM:
-        verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?verify={encodeId}"
+        verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?verify={encodeId}&is_preview=false"
     else:
-        verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+        verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
         verifyLink += f"&name={quote(name)}"
     print(verifyLink)
     msg = await client.send_message(

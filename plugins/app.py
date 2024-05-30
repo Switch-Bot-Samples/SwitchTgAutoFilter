@@ -129,7 +129,7 @@ async def showFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
                 Button("Get File", callback_data=f"blk_{fileId}"),
                 ShareButton(
                     "Share file",
-                    share_text=f"{DOMAIN}/chat/{ctx.user.user_name}?stream={fileId}",
+                    share_text=f"{DOMAIN}/chat/{ctx.user.user_name}?stream={fileId}&is_preview=false",
                 ),
             ]
         ),

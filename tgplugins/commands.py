@@ -360,9 +360,9 @@ async def start(client: Client, message: Message):
     if file_id.isdigit():
         details = await switch_file_details(file_id)
         if SEND_PM:
-            verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}"
+            verifyLink = f"{DOMAIN}/chat/{SW_USERNAME}?start={file_id}&is_preview=false"
         else:
-            verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}"
+            verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
             verifyLink += f"&name={quote(message.from_user.first_name)}"
         file = details[0]
         await client.send_message(
