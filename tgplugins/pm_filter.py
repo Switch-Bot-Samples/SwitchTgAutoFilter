@@ -58,11 +58,16 @@ async def auto_pm_fill(b, m):
 
 @Client.on_callback_query(filters.regex("shorturl"))
 async def openShort(bot, query):
-    fileId = query.data.split("|")[-1]
+    files= query.data.split("|")[-1]
+    file = await get_file_details(files)
+    
+    #link = get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}')
+    await bot.send_message(chat_id = query.from_user.id,text=f"{file.file_name}\n\n{file.file_size}\n\n{get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{files}')}")
     await query.answer(
-        url=f"https://telegram.dog/{temp.U_NAME}?start=files_{fileId}"
-    )
-
+        'Check On Pm Of Bot',
+        show_alert=True
+                            
+        )
 
 @Client.on_callback_query(
     filters.create(lambda _, __, query: query.data.startswith("pmnext"))
