@@ -160,7 +160,7 @@ async def pm_next_page(bot, query):
                     "⬅️ ʙᴀᴄᴋ", callback_data=f"pmnext_{req}_{key}_{off_set}"
                 ),
                 InlineKeyboardButton(
-                    f"❄️ ᴩᴀɢᴇꜱ {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
+                    f"❄️ ᴩᴀɢᴇꜱ {(offset or 0) + 1} / {math.ceil(total / 10)}",
                     callback_data="pages",
                 ),
             ]
@@ -169,7 +169,7 @@ async def pm_next_page(bot, query):
         btn.append(
             [
                 InlineKeyboardButton(
-                    f"❄️ {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
+                    f"❄️ {(offset or 0) + 1} / {math.ceil(total / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(
@@ -184,7 +184,7 @@ async def pm_next_page(bot, query):
                     "⬅️ ʙᴀᴄᴋ", callback_data=f"pmnext_{req}_{key}_{off_set}"
                 ),
                 InlineKeyboardButton(
-                    f"❄️ {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
+                    f"❄️ {offset + 1} / {math.ceil(total / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(
@@ -238,6 +238,7 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
             files, offset, total_results = await get_search_results(
                 search.lower(), offset=0, filter=True
             )
+            print(files, offset, total_results)
             if not files:
                 return await pm_spoll_choker(msg)
         else:
@@ -309,7 +310,7 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
         btn.append(
             [
                 InlineKeyboardButton(
-                    text=f"❄️ ᴩᴀɢᴇꜱ 1/{math.ceil(int(total_results) / 6)}",
+                    text=f"❄️ ᴩᴀɢᴇꜱ 1/{math.ceil(int(total_results) / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(

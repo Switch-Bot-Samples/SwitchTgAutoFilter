@@ -224,7 +224,7 @@ async def next_page(bot, query):
         btn.append(
             [
                 InlineKeyboardButton(
-                    f"❄️ {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
+                    f"❄️ {(offset or 0) + 1} / {math.ceil(total / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(
@@ -239,7 +239,7 @@ async def next_page(bot, query):
                     "⬅️ ʙᴀᴄᴋ", callback_data=f"next_{req}_{key}_{off_set}"
                 ),
                 InlineKeyboardButton(
-                    f"❄️ {math.ceil(int(offset) / 10) + 1} / {math.ceil(total / 10)}",
+                    f"❄️ {(offset or 0) + 1} / {math.ceil(total / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(
@@ -402,7 +402,7 @@ async def auto_filter(client, msg, spoll=False):
         btn.append(
             [
                 InlineKeyboardButton(
-                    text=f"❄️ ᴩᴀɢᴇꜱ 1/{math.ceil(int(total_results) / 6)}",
+                    text=f"❄️ ᴩᴀɢᴇꜱ 1/{math.ceil(int(total_results) / 10)}",
                     callback_data="pages",
                 ),
                 InlineKeyboardButton(
