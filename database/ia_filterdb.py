@@ -108,15 +108,18 @@ async def get_search_results(
     # Slice files according to offset and max results
     cursor.limit(250)
     files.extend(await cursor.to_list(length=250))
+    
+    if kwargs.get("yfilter"):
+        topRes = extract(
+            query.lower(),
+            [getattr(f, "description", f.file_name).lower() for f in files],
+            scorer=token_ratio,
+            limit=250,
+        )
+        results = [files[y[-1]] for y in topRes]
+    else:
+        results = files
 
-    topRes = extract(
-        query.lower(),
-        [getattr(f, "description", f.file_name).lower() for f in files],
-        scorer=token_ratio,
-        limit=250,
-    )
-
-    results = [files[y[-1]] for y in topRes]
     t_results = len(results)
 
     spl = splitList(results, max_results)

@@ -215,7 +215,7 @@ async def pm_spoll_tester(bot, query):
     movie = movies[(int(movie_))]
     await query.answer("Cʜᴇᴄᴋɪɴɢ Fᴏʀ Mᴏᴠɪᴇ Iɴ Dᴀᴛᴀʙᴀsᴇ...")
     files, offset, total_results = await get_search_results(
-        movie, offset=0, filter=True
+        movie, offset=0
     )
     if files:
         k = (movie, files, offset, total_results)
