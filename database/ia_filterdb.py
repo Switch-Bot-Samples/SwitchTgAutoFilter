@@ -135,6 +135,8 @@ async def get_search_results(
         res = spl[offset]
     except:
         res = []
+    if not noffset and not res and query.count(' ') > 1:
+        return await get_search_results(query.rsplit(' ', 1)[0], file_type, max_results, offset, **kwargs)
 
     return res, noffset, t_results
 
