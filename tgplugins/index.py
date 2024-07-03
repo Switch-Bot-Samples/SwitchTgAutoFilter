@@ -9,7 +9,7 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 )
 from tgconfig import CHANNELS, LOG_CHANNEL, ADMINS
 from database.ia_filterdb import save_file
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from utils import temp
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def media(bot, message):
         return
     media.file_type = file_type
     media.caption = message.caption
-    await save_file(media)
+    await save_file(media, message_id=message.id, chat_id=message.chat.id)
 
 
 @Client.on_callback_query(filters.regex(r"^index"))
@@ -135,7 +135,7 @@ async def set_skip_number(bot, message):
         await message.reply("Give Me A Skip Number")
 
 
-async def index_files_to_db(lst_msg_id, chat, msg, bot):
+async def index_files_to_db(lst_msg_id, chat, msg: Message, bot):
     total_files = 0
     duplicate = 0
     errors = 0
@@ -147,6 +147,7 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
             current = temp.CURRENT
             temp.CANCEL = False
             async for message in bot.iter_messages(chat, lst_msg_id, temp.CURRENT):
+                message: Message
                 if temp.CANCEL:
                     await msg.edit(
                         f"Successfully Cancelled!!\n\nSaved <code>{total_files}</code> files to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>"
@@ -188,7 +189,7 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                     continue
                 media.file_type = message.media.value
                 media.caption = message.caption
-                aynav, vnay = await save_file(media)
+                aynav, vnay = await save_file(media, message.chat.id, message.id)
                 if aynav:
                     total_files += 1
                 elif vnay == 0:

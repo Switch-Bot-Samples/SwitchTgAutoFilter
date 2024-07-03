@@ -60,6 +60,7 @@ from database.filters_mdb import del_all, find_filter, get_filters
 from database.gfilters_mdb import find_gfilter, get_gfilters
 from database.users_chats_db import db
 
+from config import FORCE_SWITCH_STREAM
 
 # Configuration
 from tgconfig import (
@@ -107,6 +108,26 @@ def validateSwitchVerify(userId):
 
 
 async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
+    if FORCE_SWITCH_STREAM:
+
+        if SEND_PM:
+            verifyLink = (
+                f"{DOMAIN}/chat/{SW_USERNAME}?getfile={fileId}&is_preview=false"
+            )
+        else:
+            verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=getfile&hash={fileId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
+            verifyLink += f"&name={quote(name)}"
+
+        await client.send_message(
+            userId,
+            f"Click on the link to get your file!\n\n**[{get_size(file.file_size)} {getattr(file, 'description', file.file_name)}]({verifyLink})**\n\n",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("Get File 🗄️", url=verifyLink)]]
+            ),
+            disable_web_page_preview=True
+        )
+        return
+
     if pHash.get(userId):
         try:
             await client.delete_messages(userId, pHash[userId])
@@ -121,7 +142,8 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
     else:
         verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
         verifyLink += f"&name={quote(name)}"
-    print(verifyLink)
+    #     print(verifyLink)
+
     msg = await client.send_message(
         userId,
         f"""

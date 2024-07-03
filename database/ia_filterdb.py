@@ -34,15 +34,20 @@ class Media(Document):
     file_type = fields.StrField(allow_none=True)
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
+    file_reference = fields.StrField(allow_none=True)
+    unique_id = fields.StrField(allow_none=True)
+    chat_id = fields.StrField(allow_none=True)
+    message_id = fields.StrField(allow_none=True)
 
     class Meta:
         collection_name = COLLECTION_NAME
 
 
-async def save_file(media):
+async def save_file(media, chat_id, message_id):
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"@\w+|(_|\-|\.|\+)", " ", str(media.file_name))
     try:
+        print(chat_id, message_id)
         file = Media(
             file_id=file_id,
             file_ref=file_ref,
@@ -50,6 +55,8 @@ async def save_file(media):
             file_size=media.file_size,
             file_type=media.file_type,
             mime_type=media.mime_type,
+            chat_id=str(chat_id),
+            message_id=str(message_id),
         )
     except ValidationError:
         logger.exception("Error Occurred While Saving File In Database")
@@ -108,7 +115,7 @@ async def get_search_results(
     # Slice files according to offset and max results
     cursor.limit(250)
     files.extend(await cursor.to_list(length=250))
-    
+
     if kwargs.get("yfilter"):
         topRes = extract(
             query.lower(),
@@ -124,7 +131,7 @@ async def get_search_results(
 
     spl = splitList(results, max_results)
 
-    if offset  + 1 < len(spl):
+    if offset + 1 < len(spl):
         noffset = offset + 1
     elif t_results < max_results:
         noffset = ""
@@ -135,8 +142,10 @@ async def get_search_results(
         res = spl[offset]
     except:
         res = []
-    if not noffset and not res and query.count(' ') > 1:
-        return await get_search_results(query.rsplit(' ', 1)[0], file_type, max_results, offset, **kwargs)
+    if not noffset and not res and query.count(" ") > 1:
+        return await get_search_results(
+            query.rsplit(" ", 1)[0], file_type, max_results, offset, **kwargs
+        )
 
     return res, noffset, t_results
 
@@ -197,6 +206,10 @@ def encode_file_ref(file_ref: bytes) -> str:
     return base64.urlsafe_b64encode(file_ref).decode().rstrip("=")
 
 
+def decode_file_ref(file_ref: str) -> bytes:
+    return base64.urlsafe_b64decode((file_ref + "=").encode())
+
+
 def unpack_new_file_id(new_file_id):
     """Return file_id, file_ref"""
     decoded = FileId.decode(new_file_id)
@@ -211,6 +224,7 @@ def unpack_new_file_id(new_file_id):
     )
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
+
 
 """
 import asyncio

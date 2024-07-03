@@ -59,11 +59,10 @@ if not app._register_commands:
             ),
             RegisterCommand("deleteall", "Delete all indexed (OWNER ONLY)", True),
             RegisterCommand("listfilters", "List all filters", True),
-
             RegisterCommand("deletefiles", "Delete files [OWNER]", True),
-
             RegisterCommand("delfilter", "Delete a filter", True),
             RegisterCommand("delallfilters", "Delete all filters", True),
+            RegisterCommand("getfile", "Get file by id", True),
         ]
     )
 
@@ -161,6 +160,7 @@ loop.run_until_complete(app.start())
 tgclient.start()
 # loop.create_task(bt.start())
 
+
 async def start_web_server():
     server = AppRunner(web_server())
 
@@ -168,10 +168,11 @@ async def start_web_server():
     await TCPSite(server, BIND_ADDRESS, STREAM_PORT).start()
     logging.info("Service Started")
 
+
 if START_SERVER:
     loop.run_until_complete(start_web_server())
 
 loop.run_until_complete(bt.start())
 idle()
 # loop.run_forever()
-#bt.run()
+# bt.run()

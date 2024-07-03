@@ -2,7 +2,8 @@ from client import app, hasJoined
 from swibots import *
 from swdatabase.ia_filterdb import get_search_results, get_file_details, getMovie
 from guessit import guessit
-from base64 import b16decode
+from base64 import b16decode, b16encode
+
 from config import DISABLE_FORCE, STREAM_URL
 from common import SW_COMMUNITY, DOMAIN, SW_USERNAME
 
@@ -28,9 +29,7 @@ async def showJoinPage(ctx: BotContext[CallbackQueryEvent]):
                 f"🤖 Please join below community in order to use this bot!",
                 TextSize.SMALL,
             ),
-            Button(
-                "Join Community", url=f"https://iswitch.click/{SW_COMMUNITY}"
-            ),
+            Button("Join Community", url=f"https://iswitch.click/{SW_COMMUNITY}"),
             Spacer(y=20),
             Text("After joining, reopen the app to perform any action!"),
         ]
@@ -250,47 +249,60 @@ async def streamTgFile(ctx: BotContext[CallbackQueryEvent]):
     channel, messageId = b16decode(hash.encode()).decode().split(":")
     from tclient import tgclient
     from streamer.utils import get_name
-    
+
     try:
         channel = int(channel)
     except Exception:
         pass
     try:
         message = await tgclient.get_messages(
-            chat_id=channel,
-            message_ids=int(messageId)
+            chat_id=channel, message_ids=int(messageId)
         )
     except Exception as er:
-        await ctx.event.answer(
-            callback=AppPage(
-                components=[
-                    Text(f"ERROR: {er}")
-                ]
-            )
-        )
-        return 
+        await ctx.event.answer(callback=AppPage(components=[Text(f"ERROR: {er}")]))
+        return
     url = f"{STREAM_URL}/stream?hash={hash}"
     comps = [
-        VideoPlayer(
-            url=url,
-            title=get_name(message)
-        ),
+        VideoPlayer(url=url, title=get_name(message)),
         ButtonGroup(
             [
                 ShareButton(
                     "Share",
-                    share_text=f"{DOMAIN}/{SW_USERNAME}:{ctx.event.callback_data}"
+                    share_text=f"{DOMAIN}/{SW_USERNAME}:{ctx.event.callback_data}",
                 ),
-                Button(
-                    "Download",
-                    url=url
-                )
+                Button("Download", url=url),
             ]
-        )
-    ]
-    await ctx.event.answer(
-        callback=AppPage(
-            components=comps
         ),
-        new_page=True
+    ]
+    await ctx.event.answer(callback=AppPage(components=comps), new_page=True)
+
+
+@app.on_command("getfile")
+async def onCommand(ctx: BotContext[CommandEvent]):
+    m = ctx.event.message
+    param = ctx.event.params
+    if not param:
+        await m.send("Invalid file id!")
+        return
+    from database.ia_filterdb import get_file_details
+
+    details = await get_file_details(param)
+    file = details[0]
+    encodeId = f"{file['chat_id']}:{file['message_id']}"
+
+    hash = b16encode(encodeId.encode()).decode()
+    url = f"{STREAM_URL}/stream?hash={hash}"
+
+    await m.reply_text(
+        f"""*Here is your file*\n\nFile Name: {file.file_name}""",
+        inline_markup=InlineMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Stream", callback_data=f"stream_{hash}"
+                    ),
+                    InlineKeyboardButton("Download", url=url),
+                ]
+            ]
+        ),
     )

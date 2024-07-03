@@ -80,16 +80,16 @@ class ByteStreamer:
         Generates the media session for the DC that contains the media file.
         This is required for getting the bytes from Telegram servers.
         """
-
-        media_session = client.media_sessions.get(file_id.dc_id, None)
+        dc_id = getattr(file_id, "dc_id", None) or 1
+        media_session = client.media_sessions.get(dc_id, None)
 
         if media_session is None:
-            if file_id.dc_id != await client.storage.dc_id():
+            if dc_id != await client.storage.dc_id():
                 media_session = Session(
                     client,
-                    file_id.dc_id,
+                   dc_id,
                     await Auth(
-                        client, file_id.dc_id, await client.storage.test_mode()
+                        client, dc_id, await client.storage.test_mode()
                     ).create(),
                     await client.storage.test_mode(),
                     is_media=True,
@@ -98,7 +98,7 @@ class ByteStreamer:
 
                 for _ in range(6):
                     exported_auth = await client.invoke(
-                        raw.functions.auth.ExportAuthorization(dc_id=file_id.dc_id)
+                        raw.functions.auth.ExportAuthorization(dc_id=dc_id)
                     )
 
                     try:
@@ -110,7 +110,7 @@ class ByteStreamer:
                         break
                     except AuthBytesInvalid:
                         logger.debug(
-                            f"Invalid authorization bytes for DC {file_id.dc_id}"
+                            f"Invalid authorization bytes for DC {dc_id}"
                         )
                         continue
                 else:
@@ -119,16 +119,16 @@ class ByteStreamer:
             else:
                 media_session = Session(
                     client,
-                    file_id.dc_id,
+                   dc_id,
                     await client.storage.auth_key(),
                     await client.storage.test_mode(),
                     is_media=True,
                 )
                 await media_session.start()
-            logger.debug(f"Created media session for DC {file_id.dc_id}")
-            client.media_sessions[file_id.dc_id] = media_session
+            logger.debug(f"Created media session for DC {dc_id}")
+            client.media_sessions[dc_id] = media_session
         else:
-            logger.debug(f"Using cached media session for DC {file_id.dc_id}")
+            logger.debug(f"Using cached media session for DC {dc_id}")
         return media_session
 
     @staticmethod

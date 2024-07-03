@@ -140,7 +140,8 @@ async def start(client: Client, message: Message):
             "CAACAgUAAxkBAAEBvlVk7YKnYxIHVnKW2PUwoibIR2ygGAACBAADwSQxMYnlHW4Ls8gQHgQ"
         )
         await asyncio.sleep(2)
-        await message.reply_photo( photo=random.choice(PICS),
+        await message.reply_photo(
+            photo=random.choice(PICS),
             caption=START_MESSAGE.format(
                 user=message.from_user.mention, bot=client.mention
             ),

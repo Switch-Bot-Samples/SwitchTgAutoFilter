@@ -111,3 +111,5 @@ START_SERVER = is_enabled(environ.get("START_SERVER", "True"), False)
 BIND_ADDRESS = environ.get("BIND_ADDRESS", "0.0.0.0")
 STREAM_PORT = environ.get("STREAM_PORT", "1500")
 STREAM_URL = environ.get("STREAM_URL", "")
+
+FORCE_SWITCH_STREAM = is_enabled(environ.get("FORCE_SWITCH_STREAM", "False"), False)

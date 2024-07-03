@@ -71,7 +71,7 @@ def get_name(media_msg: Union[Message, FileId]) -> str:
         media = get_media_from_message(media_msg)
         file_name = getattr(media, "file_name", "")
 
-    elif isinstance(media_msg, FileId):
+    elif hasattr(media_msg, "file_name"):
         file_name = getattr(media_msg, "file_name", "")
 
     if not file_name:
