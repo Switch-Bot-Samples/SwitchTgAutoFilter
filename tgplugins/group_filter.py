@@ -7,6 +7,8 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 from Script import script
 from utils import get_shortlink, admin_filter
 import pyrogram
+
+from config import SPELL_FILTER
 from database.connections_mdb import (
     active_connection,
     all_connections,
@@ -550,15 +552,33 @@ async def advantage_spell_chok(msg):
         await asyncio.sleep(8)
         return await k.delete()
     temp.GP_SPELL[msg.id] = movielist
-    btn = [
-        [
-            InlineKeyboardButton(
-                text=movie.strip(),
-                callback_data=f"spolling#{user}#{k}",
-            )
+
+    async def check_results(query, clb):
+        query = query.strip()
+        res = await get_file_details(query)
+        if res:
+            return [InlineKeyboardButton(query, callback_data=clb)]
+
+    if SPELL_FILTER:
+        filtered = await asyncio.gather(
+            *[
+                check_results(movie, f"pmspolling#{user}#{k}")
+                for k, movie in enumerate(movielist)
+            ]
+        )
+        if not filtered:
+            await msg.reply("I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏᴛʜɪɴɢ Rᴇʟᴀᴛᴇᴅ Tᴏ Tʜᴀᴛ", quote=True)
+            return
+        btn = [list(filter(lambda x: x, filtered))]
+    else:
+        btn = [
+            [
+                InlineKeyboardButton(
+                    text=movie.strip(), callback_data=f"spolling#{user}#{k}"
+                )
+            ]
+            for k, movie in enumerate(movielist)
         ]
-        for k, movie in enumerate(movielist)
-    ]
     btn.append(
         [
             InlineKeyboardButton(

@@ -6,6 +6,7 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 )
 from Script import script
 from utils import get_shortlink
+from config import SPELL_FILTER
 from tgconfig import (
     AUTH_USERS,
     PM_IMDB,
@@ -58,16 +59,16 @@ async def auto_pm_fill(b, m):
 
 @Client.on_callback_query(filters.regex("shorturl"))
 async def openShort(bot, query):
-    files= query.data.split("|")[-1]
+    files = query.data.split("|")[-1]
     file = await get_file_details(files)
-    
-    #link = get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}')
-    await bot.send_message(chat_id = query.from_user.id,text=f"{file.file_name}\n\n{file.file_size}\n\n{get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{files}')}")
-    await query.answer(
-        'Check On Pm Of Bot',
-        show_alert=True
-                            
-        )
+
+    # link = get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}')
+    await bot.send_message(
+        chat_id=query.from_user.id,
+        text=f"{file.file_name}\n\n{file.file_size}\n\n{get_shortlink(f'https://telegram.dog/{temp.U_NAME}?start=files_{files}')}",
+    )
+    await query.answer("Check On Pm Of Bot", show_alert=True)
+
 
 @Client.on_callback_query(
     filters.create(lambda _, __, query: query.data.startswith("pmnext"))
@@ -101,7 +102,7 @@ async def pm_next_page(bot, query):
                 [
                     InlineKeyboardButton(
                         text=f"[{get_size(file.file_size)}] {file.file_name}",
-                        callback_data=f"shorturl|{file.file_id}"
+                        callback_data=f"shorturl|{file.file_id}",
                     )
                 ]
                 for file in files
@@ -111,12 +112,11 @@ async def pm_next_page(bot, query):
                 [
                     InlineKeyboardButton(
                         text=f"{file.file_name}",
-                        callback_data=f"shorturl|{file.file_id}"
+                        callback_data=f"shorturl|{file.file_id}",
                     ),
                     InlineKeyboardButton(
                         text=f"{get_size(file.file_size)}",
-                                              callback_data=f"shorturl|{file.file_id}"
-
+                        callback_data=f"shorturl|{file.file_id}",
                     ),
                 ]
                 for file in files
@@ -146,7 +146,14 @@ async def pm_next_page(bot, query):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
+    btn.insert(
+        0,
+        [
+            InlineKeyboardButton(
+                "🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49"
+            )
+        ],
+    )
     if 0 < offset <= 10:
         off_set = 0
     elif offset == 0:
@@ -214,9 +221,7 @@ async def pm_spoll_tester(bot, query):
         )
     movie = movies[(int(movie_))]
     await query.answer("Cʜᴇᴄᴋɪɴɢ Fᴏʀ Mᴏᴠɪᴇ Iɴ Dᴀᴛᴀʙᴀsᴇ...")
-    files, offset, total_results = await get_search_results(
-        movie, offset=0
-    )
+    files, offset, total_results = await get_search_results(movie, offset=0)
     if files:
         k = (movie, files, offset, total_results)
         await pm_AutoFilter(bot, query, k)
@@ -254,8 +259,7 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 [
                     InlineKeyboardButton(
                         text=f"[{get_size(file.file_size)}] {file.file_name}",
-                                                callback_data=f"shorturl|{file.file_id}"
-
+                        callback_data=f"shorturl|{file.file_id}",
                     )
                 ]
                 for file in files
@@ -265,13 +269,11 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 [
                     InlineKeyboardButton(
                         text=f"{file.file_name}",
-                                               callback_data=f"shorturl|{file.file_id}"
-
+                        callback_data=f"shorturl|{file.file_id}",
                     ),
                     InlineKeyboardButton(
                         text=f"{get_size(file.file_size)}",
-                                              callback_data=f"shorturl|{file.file_id}"
-
+                        callback_data=f"shorturl|{file.file_id}",
                     ),
                 ]
                 for file in files
@@ -302,7 +304,14 @@ async def pm_AutoFilter(client, msg, pmspoll=False):
                 for file in files
             ]
 
-    btn.insert(0, [InlineKeyboardButton("🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49")])
+    btn.insert(
+        0,
+        [
+            InlineKeyboardButton(
+                "🔗 ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ 🔗", url=f"https://t.me/tgtamillinks/49"
+            )
+        ],
+    )
     if offset != "":
         key = f"{message.id}"
         temp.PM_BUTTONS[key] = search
@@ -460,14 +469,33 @@ async def pm_spoll_choker(msg):
         await asyncio.sleep(10)
         return await k.delete()
     temp.PM_SPELL[str(msg.id)] = movielist
-    btn = [
-        [
-            InlineKeyboardButton(
-                text=movie.strip(), callback_data=f"pmspolling#{user}#{k}"
-            )
+
+    async def check_results(query, clb):
+        query = query.strip()
+        res = await get_file_details(query)
+        if res:
+            return [InlineKeyboardButton(query, callback_data=clb)]
+
+    if SPELL_FILTER:
+        filtered = await asyncio.gather(
+            *[
+                check_results(movie, f"pmspolling#{user}#{k}")
+                for k, movie in enumerate(movielist)
+            ]
+        )
+        if not filtered:
+            await msg.reply("I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏᴛʜɪɴɢ Rᴇʟᴀᴛᴇᴅ Tᴏ Tʜᴀᴛ", quote=True)
+            return
+        btn = [list(filter(lambda x: x, filtered))]
+    else:
+        btn = [
+            [
+                InlineKeyboardButton(
+                    text=movie.strip(), callback_data=f"pmspolling#{user}#{k}"
+                )
+            ]
+            for k, movie in enumerate(movielist)
         ]
-        for k, movie in enumerate(movielist)
-    ]
     btn.append(
         [
             InlineKeyboardButton(
