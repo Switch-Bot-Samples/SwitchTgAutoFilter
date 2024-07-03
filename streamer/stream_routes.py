@@ -66,6 +66,7 @@ async def __stream_handler(request: web.Request, thumb=False):
             except Exception:
                 pass
             messageId = int(message)
+#            print(channel, message)
         elif not file_id:
             channel = request.query.get("channel")
             try:

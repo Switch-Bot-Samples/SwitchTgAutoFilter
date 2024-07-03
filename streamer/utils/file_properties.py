@@ -67,17 +67,19 @@ def get_hash(media_msg: Union[str, Message], length: int) -> str:
 
 
 def get_name(media_msg: Union[Message, FileId]) -> str:
+#    print(media_msg)
+
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
         file_name = getattr(media, "file_name", "")
 
-    elif hasattr(media_msg, "file_name"):
+    elif hasattr(media_msg, "file_name") or isinstance(media_msg, FileId):
         file_name = getattr(media_msg, "file_name", "")
 
     if not file_name:
         if isinstance(media_msg, Message) and media_msg.media:
             media_type = media_msg.media.value
-        elif media_msg.file_type:
+        elif hasattr(media_msg, "file_type"):
             media_type = media_msg.file_type.name.lower()
         else:
             media_type = "file"

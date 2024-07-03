@@ -17,7 +17,7 @@ BOT_TOKEN = environ['TG_BOT_TOKEN']
 
 # Test
 # Bot settings
-WEBHOOK = bool(environ.get("WEBHOOK", True)) # for web support on/off
+WEBHOOK = bool(environ.get("WEBHOOK", False)) # for web support on/off
 PICS = (environ.get('PICS' ,'')).split()
 UPTIME = time.time()
 
