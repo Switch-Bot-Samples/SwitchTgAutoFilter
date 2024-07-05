@@ -175,7 +175,7 @@ async def media_streamer(
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
-    chunk_size = 1024 * 1024 * 3
+    chunk_size = 1024 * 1024 
     until_bytes = min(until_bytes, file_size - 1)
 
     offset = from_bytes - (from_bytes % chunk_size)

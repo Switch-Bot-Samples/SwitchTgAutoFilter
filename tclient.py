@@ -1,7 +1,7 @@
 from pyrogram import Client
 from tgconfig import BOT_TOKEN, API_ID, API_HASH
 from streamer.utils.constants import multi_clients, work_loads
-from os import environ
+from os import environ, path, mkdir
 
 import asyncio, logging
 
@@ -14,6 +14,9 @@ tgclient = Client(
 SLEEP_THRESHOLD = 360
 USE_SESSION_FILE = True
 sessions_dir = "sessions"
+
+if not path.exists(sessions_dir):
+    mkdir(sessions_dir)
 
 multi_clients[0] = tgclient
 
