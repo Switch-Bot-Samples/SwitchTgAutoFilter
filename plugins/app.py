@@ -1,6 +1,10 @@
 from client import app, hasJoined
 from swibots import *
-from swdatabase.ia_filterdb import get_search_results, get_file_details, getMovie
+from swdatabase.ia_filterdb import getMovie, get_file_details
+from database.ia_filterdb import (
+    get_file_details as get_tg_file_details,
+    get_search_results,
+)
 from guessit import guessit
 from base64 import b16decode, b16encode
 
@@ -87,8 +91,10 @@ async def showFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
         fileId = ctx.event.callback_data.split("|")[-1]
     if not await showJoinPage(ctx):
         return
+    print(fileId)
     details = await get_file_details(int(fileId))
     if not details:
+        tgfiledetails = await get_tg_file_details(fileId)
         await ctx.event.answer("File not found", show_alert=True)
         return
     details = details[0]
@@ -151,16 +157,19 @@ async def makeListTiles(query="", max=25):
     results, _, __ = await get_search_results(query, max_results=max)
     gV = []
     for file in results:
-        details = guessit(file.description or file.file_name)
+        details = guessit(getattr(file, "description", None) or file.file_name)
         gV.append(
             ListTile(
-                file.movie_name
+                getattr(file, "movie_name", None)
                 or details.get("title")
-                or file.description
+                or getattr(file, "description", None)
                 or file.file_name,
                 title_extra=(
                     f"Episode {file.episode_id}"
-                    if (file.tv_show and file.episode_id)
+                    if (
+                        getattr(file, "tv_show", None)
+                        and getattr(file, "episode_id", None)
+                    )
                     else (
                         f"EP {details.get('episode', '')} | {details.get('episode_title', '')}".strip()
                         if details.get("episode")
@@ -173,16 +182,25 @@ async def makeListTiles(query="", max=25):
                 ),
                 thumb=(
                     file.thumbnail
-                    if file.thumbnail
+                    if getattr(file, "thumbnail", None)
                     else (
                         file.file_url
-                        if file.description.endswith((".jpg", ".png", ".jpeg"))
-                        else "https://media.istockphoto.com/id/1147544810/vector/no-thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=2-ScbybM7bUYw-nptQXyKKjwRHKQZ9fEIwoWmZG9Zyg="
+                        if hasattr(file, "description")
+                        and file.description.endswith((".jpg", ".png", ".jpeg"))
+                        else (
+                            app.user.imageurl
+                            if app.user.imageurl.endswith((".jpg", ".png", ".jpeg"))
+                            else "https://media.istockphoto.com/id/1147544810/vector/no-thumbnail-image-vector-graphic.jpg?s=612x612&w=0&k=20&c=2-ScbybM7bUYw-nptQXyKKjwRHKQZ9fEIwoWmZG9Zyg="
+                        )
                     )
                 ),
                 description=f"File Size: {humanbytes(file.file_size)}"
                 + (f" | {details['year']}" if details.get("year") else ""),
-                callback_data=f"vfile|{file.file_id}",
+                callback_data=(
+                    f"vfile|{file.file_id}"
+                    if hasattr(file, "description")
+                    else f"tgstream|{file.file_id}"
+                ),
             )
         )
     return gV
@@ -242,11 +260,18 @@ async def onHome(ctx: BotContext[CallbackQueryEvent]):
 
 
 @app.on_callback_query(regexp("stream_"))
-async def streamTgFile(ctx: BotContext[CallbackQueryEvent]):
+async def streamTgFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
     if not await showJoinPage(ctx):
         return
-    hash = ctx.event.callback_data.split("_")[-1]
-    channel, messageId = b16decode(hash.encode()).decode().split(":")
+    if fileId:
+        tgd = await get_tg_file_details(fileId)
+        file = tgd[0]
+        channel = file["chat_id"]
+        messageId = file["message_id"]
+        hash = b16encode(f"{channel}:{messageId}".encode()).decode()
+    else:
+        hash = ctx.event.callback_data.split("_")[-1]
+        channel, messageId = b16decode(hash.encode()).decode().split(":")
     from tclient import tgclient
     from streamer.utils import get_name
 
@@ -277,6 +302,12 @@ async def streamTgFile(ctx: BotContext[CallbackQueryEvent]):
     await ctx.event.answer(callback=AppPage(components=comps), new_page=True)
 
 
+@app.on_callback_query(regexp("tgstream"))
+async def ontstream(ctx: BotContext[CallbackQueryEvent]):
+    fileId = ctx.event.callback_data.split("|")[-1]
+    await streamTgFile(ctx, fileId)
+
+
 @app.on_command("getfile")
 async def onCommand(ctx: BotContext[CommandEvent]):
     m = ctx.event.message
@@ -298,9 +329,7 @@ async def onCommand(ctx: BotContext[CommandEvent]):
         inline_markup=InlineMarkup(
             [
                 [
-                    InlineKeyboardButton(
-                        "Stream", callback_data=f"stream_{hash}"
-                    ),
+                    InlineKeyboardButton("Stream", callback_data=f"stream_{hash}"),
                     InlineKeyboardButton("Download", url=url),
                 ]
             ]

@@ -9,7 +9,7 @@ from swibots import (
     InlineQueryEvent,
     InlineQueryAnswer,
 )
-from swdatabase.ia_filterdb import get_search_results
+from database.ia_filterdb import get_search_results
 from swutils import get_size, file_int_from_name, file_str_from_int
 from config import CUSTOM_FILE_CAPTION
 from client import app

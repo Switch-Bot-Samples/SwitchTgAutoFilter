@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
 from rapidfuzz.process import extract
 from rapidfuzz.fuzz import token_set_ratio, partial_token_sort_ratio, token_ratio
-
+from config import SEARCH_SWITCH_FILES
 # extract()
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -100,15 +100,20 @@ async def get_search_results(
         regex = re.compile(raw_pattern, flags=re.IGNORECASE)
     except:
         return [], "", 0
+
     filter = {"file_name": regex}
     if file_type:
         filter["file_type"] = file_type
+    
+    if SEARCH_SWITCH_FILES:
+        #    total_results = await Media.count_documents(filter)
+        sfilter = {"$or": [{"description": regex}, {"caption": regex}]}
+        cs = SMedia.find(sfilter)
+        cs.sort("$natural", -1)
+        files = await cs.to_list(length=250)
+    else:
+        files = []
 
-    #    total_results = await Media.count_documents(filter)
-    sfilter = {"$or": [{"description": regex}, {"caption": regex}]}
-    cs = SMedia.find(sfilter)
-    cs.sort("$natural", -1)
-    files = await cs.to_list(length=250)
     cursor = Media.find(filter)
     # Sort by recent
     cursor.sort("$natural", -1)

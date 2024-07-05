@@ -16,7 +16,8 @@ from swibots import (
     regexp,
 )
 from bs4 import BeautifulSoup as soup
-from swdatabase.ia_filterdb import save_file, Media, get_search_results, make_request
+from database.ia_filterdb import get_search_results
+from swdatabase.ia_filterdb import save_file, Media, make_request
 from swutils import get_size, temp, file_int_from_name, file_str_from_int
 
 # from rapidfuzz.process import extract
@@ -366,6 +367,8 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
     )
 
     for file in files:
+#        print(file)
+
         title = file.file_name
         size = get_size(file.file_size)
         f_caption = file.caption
@@ -382,11 +385,17 @@ async def show_media_results(msg: Message, search: str, offset: str, app: BotApp
         if f_caption is None:
             f_caption = f"{file.file_name}"
 
+        if hasattr(file, "description"):
+            url = f"https://iswitch.click/{app.user.user_name}?start={file.file_id}"
+        else:
+            url = f"https://iswitch.click/{app.user.user_name}?getfile={file.file_id}"
+        
+        s_name = getattr(file, "description", file.file_name)
         results.append(
             [
                 InlineKeyboardButton(
-                    f"*[{size}] {file.description}*",
-                    url=f"https://iswitch.click/{app.user.user_name}?start={file.file_id}",
+                    f"*[{size}] {s_name}*",
+                    url=url,
                     #                callback_data=f"blk_{file.file_id}"
                     # text=f'📁 Name: {f_caption} Size: {get_size(file.file_size)}\nType: {file_str_from_int(file.file_type)}',
                     # url=file.file_url
