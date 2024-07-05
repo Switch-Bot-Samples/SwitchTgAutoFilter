@@ -16,7 +16,7 @@ from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from base64 import b16decode
 from streamer.exceptions import *
-from streamer.utils.constants import work_loads
+from streamer.utils.constants import work_loads, multi_clients
 from database.ia_filterdb import get_file_details, decode_file_ref
 
 from pyrogram.file_id import FileId
@@ -88,7 +88,7 @@ async def __stream_handler(request: web.Request, thumb=False):
 
 
 class_cache = {}
-
+fileHolder = {}
 
 async def media_streamer(
     request: web.Request,
@@ -105,49 +105,58 @@ async def media_streamer(
     if not class_cache.get(0):
         class_cache[0] = utils.ByteStreamer(bot)
 
-    faster_client = bot
-    tg_connect = class_cache[0]
+    index = min(work_loads, key=work_loads.get)
+    faster_client = multi_clients[index]
+
+    if faster_client in class_cache:
+        tg_connect = class_cache[faster_client]
+        logger.debug(f"Using cached ByteStreamer object for client {index}")
+    else:
+        logger.debug(f"Creating new ByteStreamer object for client {index}")
+        tg_connect = utils.ByteStreamer(faster_client)
+        class_cache[faster_client] = tg_connect
+
     details = None
-    if file_id:
-        details = await get_file_details(file_id)
-        if not details:
-            return web.json_response({"ok": False, "message": "File not found"})
-        file_id = details[0]
-        if file_id['message_id']:
-            message_id = int(file_id['message_id'])
-            channel = int(file_id['chat_id'])
-        else:
-            file_id = FileId.decode(file_id['file_id'])
+    tagId = file_id
+    if channel and message_id:
+        tagId = f"{channel}:{message_id}"
+    
+    if tagId in fileHolder:
+        file_id = fileHolder[tagId]
 
-    if message_id and channel:
-        try:
-            msg = await bot.get_messages(channel, message_ids=message_id)
-            assert msg != None
-        except Exception as er:
-            logger.info(f"check tgbot access: {er}")
-            return web.json_response({"message": str(er), "ok": False})
-
-            #    if Var.MULTI_CLIENT:
-            #        logger.info(f"Client {index} is now serving {request.remote}")
-
-            if class_cache.get(userid):
-                tg_connect = class_cache[userid]
-                logger.debug(f"Using cached ByteStreamer object for client {userid}")
+    else:  
+        if file_id:
+            details = await get_file_details(file_id)
+            if not details:
+                return web.json_response({"ok": False, "message": "File not found"})
+            file_id = details[0]
+            if file_id['message_id']:
+                message_id = int(file_id['message_id'])
+                channel = int(file_id['chat_id'])
             else:
-                logger.debug(f"Creating new ByteStreamer object for client {userid}")
-                tg_connect = utils.ByteStreamer(faster_client)
-                class_cache[userid] = tg_connect
+                file_id = FileId.decode(file_id['file_id'])
 
-        logger.debug("before calling get_file_properties")
-        file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
-        print(file_id, thumb)
-        logger.debug("after calling get_file_properties")
+        if message_id and channel:
+            try:
+                print(channel, message_id)
+                msg = await faster_client.get_messages(int(channel), message_ids=message_id)
+                assert msg != None
+            except Exception as er:
+                logger.info(f"check tgbot access: {er}")
+                return web.json_response({"message": str(er), "ok": False})
 
-    elif not file_id:
-        return web.json_response({"ok": False, "message": "Invalid request"})
-    #    if utils.get_hash(file_id.unique_id, 7) != secure_hash:
-    #       logger.debug(f"Invalid hash for message with ID {message_id}")
-    #      raise InvalidHash
+            logger.debug("before calling get_file_properties")
+
+            file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
+            print(file_id, thumb)
+            logger.debug("after calling get_file_properties")
+
+        elif not file_id:
+            return web.json_response({"ok": False, "message": "Invalid request"})
+        #    if utils.get_hash(file_id.unique_id, 7) != secure_hash:
+        #       logger.debug(f"Invalid hash for message with ID {message_id}")
+        #      raise InvalidHash
+        fileHolder[tagId] = file_id
 
     file_size = file_id.file_size
 
@@ -166,7 +175,7 @@ async def media_streamer(
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
-    chunk_size = 1024 * 1024
+    chunk_size = 1024 * 1024 * 3
     until_bytes = min(until_bytes, file_size - 1)
 
     offset = from_bytes - (from_bytes % chunk_size)

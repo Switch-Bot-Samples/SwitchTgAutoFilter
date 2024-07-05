@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import asyncio
 from client import app, hasJoined
 from tgbot import bt
-from tclient import tgclient
+from tclient import tgclient, initialize_clients
 import os
 from config import DISABLE_FORCE, START_SERVER, BIND_ADDRESS, STREAM_PORT
 import swibots
@@ -156,6 +156,7 @@ async def start(ctx: BotContext[CommandEvent]):
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(app.start())
+loop.run_until_complete(initialize_clients())
 
 tgclient.start()
 # loop.create_task(bt.start())

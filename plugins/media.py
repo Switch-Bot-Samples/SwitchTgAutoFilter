@@ -268,13 +268,14 @@ async def delete_all_index_confirm(ctx: BotContext[CallbackQueryEvent]):
 async def listenCallback(ctx: BotContext[CallbackQueryEvent]):
     m = ctx.event.message
     data = int(ctx.event.callback_data.split("_")[-1])
-    file = await Media.find({"file_id": data}).to_list(1)
-    file: Media = file[0]
     try:
         media = await app.get_media(data)
     except Exception as er:
         print(er)
         try:
+            file = await Media.find({"file_id": data}).to_list(1)
+            file: Media = file[0]
+
             await m.send(
                 "",
                 media_info=SwiMedia(
@@ -292,6 +293,9 @@ async def listenCallback(ctx: BotContext[CallbackQueryEvent]):
         except Exception as er:
             await m.send(f"{file.description} not found!")
             return
+
+    file = await Media.find({"file_id": data}).to_list(1)
+    file: Media = file[0]
     media.id = 0
     await ctx.event.answer("File will be sent to your PM!", show_alert=True)
     f_caption = file.caption
