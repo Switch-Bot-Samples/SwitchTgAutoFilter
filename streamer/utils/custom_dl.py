@@ -10,6 +10,12 @@ from pyrogram.session import Session, Auth
 from pyrogram.errors import AuthBytesInvalid
 from streamer.exceptions import FIleNotFound
 from pyrogram.file_id import FileId, FileType, ThumbnailSource
+from pyrogram.errors import (
+    FilerefUpgradeNeeded,
+    FileReferenceEmpty,
+    FileReferenceInvalid,
+    FileIdInvalid,
+)
 
 logger = logging.getLogger("streamer")
 
@@ -80,14 +86,14 @@ class ByteStreamer:
         Generates the media session for the DC that contains the media file.
         This is required for getting the bytes from Telegram servers.
         """
-        dc_id = getattr(file_id, "dc_id", None) or 1
+        dc_id = getattr(file_id, "dc_id", None)
         media_session = client.media_sessions.get(dc_id, None)
 
         if media_session is None:
             if dc_id != await client.storage.dc_id():
                 media_session = Session(
                     client,
-                   dc_id,
+                    dc_id,
                     await Auth(
                         client, dc_id, await client.storage.test_mode()
                     ).create(),
@@ -109,9 +115,7 @@ class ByteStreamer:
                         )
                         break
                     except AuthBytesInvalid:
-                        logger.debug(
-                            f"Invalid authorization bytes for DC {dc_id}"
-                        )
+                        logger.debug(f"Invalid authorization bytes for DC {dc_id}")
                         continue
                 else:
                     await media_session.stop()
@@ -119,7 +123,7 @@ class ByteStreamer:
             else:
                 media_session = Session(
                     client,
-                   dc_id,
+                    dc_id,
                     await client.storage.auth_key(),
                     await client.storage.test_mode(),
                     is_media=True,
@@ -189,7 +193,10 @@ class ByteStreamer:
         last_part_cut: int,
         part_count: int,
         chunk_size: int,
-    ) -> Union[str, None]:
+        channel_id: int = None,
+        message_id: int = None,
+        on_new_fileId = None
+    ) -> Union[str, None]:       
         """
         Custom generator that yields the bytes of the media file.
         Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
@@ -198,7 +205,32 @@ class ByteStreamer:
         client = self.client
         work_loads[index] += 1
         logger.debug(f"Starting to yielding file with client {index}.")
-        media_session = await self.generate_media_session(client, file_id)
+        try:
+            media_session = await self.generate_media_session(client, file_id)
+        except (
+            FilerefUpgradeNeeded,
+            FileReferenceEmpty,
+            FileReferenceInvalid,
+            FileIdInvalid,
+        ) as er:
+            logger.exception(er)
+            media_session = await self.generate_media_session(client, file_id)
+            try:
+                # print(channel, message_id)
+                msg = await self.client.get_messages(
+                    int(channel_id), message_ids=message_id
+                )
+                assert msg != None
+            except Exception as er:
+                logger.info(f"check tgbot access: {er}")
+                work_loads[index] -= 1
+                yield None
+
+            logger.debug("before calling get_file_properties")
+
+            file_id = await self.get_file_properties(channel_id, message_id, False)
+            if on_new_fileId:
+                on_new_fileId(file_id)
 
         current_part = 1
         location = await self.get_location(file_id)

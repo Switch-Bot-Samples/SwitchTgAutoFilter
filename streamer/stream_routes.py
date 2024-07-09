@@ -7,6 +7,12 @@ import time, asyncio, json
 import math
 import logging
 from streamer import utils
+from pyrogram.errors import (
+    FileIdInvalid,
+    FileReferenceEmpty,
+    FileReferenceExpired,
+    FilerefUpgradeNeeded,
+)
 
 from os import getenv
 import mimetypes
@@ -66,7 +72,7 @@ async def __stream_handler(request: web.Request, thumb=False):
             except Exception:
                 pass
             messageId = int(message)
-#            print(channel, message)
+        #            print(channel, message)
         elif not file_id:
             channel = request.query.get("channel")
             try:
@@ -89,6 +95,7 @@ async def __stream_handler(request: web.Request, thumb=False):
 
 class_cache = {}
 fileHolder = {}
+
 
 async def media_streamer(
     request: web.Request,
@@ -120,26 +127,27 @@ async def media_streamer(
     tagId = file_id
     if channel and message_id:
         tagId = f"{channel}:{message_id}"
-    
+
     if tagId in fileHolder:
         file_id = fileHolder[tagId]
-
-    else:  
+    else:
         if file_id:
             details = await get_file_details(file_id)
             if not details:
                 return web.json_response({"ok": False, "message": "File not found"})
             file_id = details[0]
-            if file_id['message_id']:
-                message_id = int(file_id['message_id'])
-                channel = int(file_id['chat_id'])
+            if file_id["message_id"]:
+                message_id = int(file_id["message_id"])
+                channel = int(file_id["chat_id"])
             else:
-                file_id = FileId.decode(file_id['file_id'])
+                file_id = FileId.decode(file_id["file_id"])
 
         if message_id and channel:
             try:
                 print(channel, message_id)
-                msg = await faster_client.get_messages(int(channel), message_ids=message_id)
+                msg = await faster_client.get_messages(
+                    int(channel), message_ids=message_id
+                )
                 assert msg != None
             except Exception as er:
                 logger.info(f"check tgbot access: {er}")
@@ -175,7 +183,7 @@ async def media_streamer(
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
-    chunk_size = 1024 * 1024 
+    chunk_size = 1024 * 1024
     until_bytes = min(until_bytes, file_size - 1)
 
     offset = from_bytes - (from_bytes % chunk_size)
@@ -184,11 +192,25 @@ async def media_streamer(
 
     req_length = until_bytes - from_bytes + 1
     part_count = math.ceil(until_bytes / chunk_size) - math.floor(offset / chunk_size)
+    
+    def on_new_fileid(fileId):
+        fileHolder[tagId] = fileId
+
     body = tg_connect.yield_file(
-        file_id, index, offset, first_part_cut, last_part_cut, part_count, chunk_size
+        file_id,
+        index,
+        offset,
+        first_part_cut,
+        last_part_cut,
+        part_count,
+        chunk_size,
+        channel_id=channel,
+        message_id=message_id,
+        on_new_fileId=on_new_fileid
     )
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
+
     print(file_name, mime_type, file_id)
     disposition = "attachment"
 
