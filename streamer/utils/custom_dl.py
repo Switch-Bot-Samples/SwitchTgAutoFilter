@@ -14,6 +14,7 @@ from pyrogram.errors import (
     FilerefUpgradeNeeded,
     FileReferenceEmpty,
     FileReferenceInvalid,
+    FileReferenceExpired,
     FileIdInvalid,
 )
 
@@ -212,6 +213,7 @@ class ByteStreamer:
             FileReferenceEmpty,
             FileReferenceInvalid,
             FileIdInvalid,
+            FileReferenceExpired
         ) as er:
             logger.exception(er)
             media_session = await self.generate_media_session(client, file_id)
