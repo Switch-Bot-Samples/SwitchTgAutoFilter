@@ -6,6 +6,7 @@ import re
 import time, asyncio, json
 import math
 import logging
+from random import choice
 from streamer import utils
 from pyrogram.errors import (
     FileIdInvalid,
@@ -248,7 +249,8 @@ async def getMessage(request: Request):
     if notVerified(request):
         return
 
-    from bot import bot
+    clients = multi_clients
+    bot = choice(list(clients.values()))
 
     channel = request.query.get("channel")
     try:

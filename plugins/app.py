@@ -1,5 +1,6 @@
 from client import app, hasJoined
 from swibots import *
+import requests
 from swdatabase.ia_filterdb import getMovie, get_file_details
 from database.ia_filterdb import (
     get_file_details as get_tg_file_details,
@@ -91,11 +92,14 @@ async def showFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
         fileId = ctx.event.callback_data.split("|")[-1]
     if not await showJoinPage(ctx):
         return
-    print(fileId)
+#     print(fileId)
     details = await get_file_details(int(fileId))
     if not details:
         tgfiledetails = await get_tg_file_details(fileId)
-        await ctx.event.answer("File not found", show_alert=True)
+        if not tgfiledetails:
+            await ctx.event.answer("File not found", show_alert=True)
+            return
+        await streamTgFile(ctx, fileId)
         return
     details = details[0]
     iData = {}
@@ -272,23 +276,21 @@ async def streamTgFile(ctx: BotContext[CallbackQueryEvent], fileId=None):
     else:
         hash = ctx.event.callback_data.split("_")[-1]
         channel, messageId = b16decode(hash.encode()).decode().split(":")
-    from tclient import tgclient
-    from streamer.utils import get_name
-
     try:
-        channel = int(channel)
-    except Exception:
-        pass
-    try:
-        message = await tgclient.get_messages(
-            chat_id=channel, message_ids=int(messageId)
-        )
+        message = requests.get(F"{STREAM_URL}/messageInfo?channel={channel}&messageId={messageId}").json()
+        message['id']
     except Exception as er:
         await ctx.event.answer(callback=AppPage(components=[Text(f"ERROR: {er}")]))
         return
+    fileName = ''
+    for type in ["photo", "video", "document", "audio"]:
+        if message.get(type):
+            fileName = message[type].get("file_name")
+            if fileName:
+                break
     url = f"{STREAM_URL}/stream?hash={hash}"
     comps = [
-        VideoPlayer(url=url, title=get_name(message)),
+        VideoPlayer(url=url, title=fileName),
         ButtonGroup(
             [
                 ShareButton(

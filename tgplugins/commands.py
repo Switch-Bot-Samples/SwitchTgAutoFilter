@@ -36,9 +36,9 @@ BATCH_FILES = {}
 
 @Client.on_message(filters.command("getlink") & filters.incoming)
 async def onGetLink(client: Client, message: Message):
-    if not START_SERVER:
-        await message.reply_text(f"This feature is disabled!")
-        return
+#    if not START_SERVER:
+#       await message.reply_text(f"This feature is disabled!")
+#       return
     reply = message.reply_to_message
     if not (reply and reply.media):
         return await message.reply_text("Please reply to media!")
