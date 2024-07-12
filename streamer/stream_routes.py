@@ -141,7 +141,8 @@ async def media_streamer(
                 message_id = int(file_id["message_id"])
                 channel = int(file_id["chat_id"])
             else:
-                file_id = FileId.decode(file_id["file_id"])
+                web.json_response({"ok": False, "message": "Invalid file_id"})
+                return
 
         if message_id and channel:
             try:

@@ -216,7 +216,6 @@ class ByteStreamer:
             FileReferenceExpired
         ) as er:
             logger.exception(er)
-            media_session = await self.generate_media_session(client, file_id)
             try:
                 # print(channel, message_id)
                 msg = await self.client.get_messages(
@@ -231,6 +230,7 @@ class ByteStreamer:
             logger.debug("before calling get_file_properties")
 
             file_id = await self.get_file_properties(channel_id, message_id, False)
+            media_session = await self.generate_media_session(client, file_id)
             if on_new_fileId:
                 on_new_fileId(file_id)
 
