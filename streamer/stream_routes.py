@@ -124,50 +124,24 @@ async def media_streamer(
         tg_connect = utils.ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
 
-    details = None
-    tagId = file_id
-    if channel and message_id:
-        tagId = f"{channel}:{message_id}"
+    if message_id and channel:
+        try:
+            #             print(channel, message_id)
+            msg = await faster_client.get_messages(int(channel), message_ids=message_id)
+            assert msg != None
+        except Exception as er:
+            logger.info(f"check tgbot access: {er}")
+            return web.json_response({"message": str(er), "ok": False})
 
-    if tagId in fileHolder:
-        file_id = fileHolder[tagId]
-    else:
-        if file_id:
-            details = await get_file_details(file_id)
-            if not details:
-                return web.json_response({"ok": False, "message": "File not found"})
-            file_id = details[0]
-            if file_id["message_id"]:
-                message_id = int(file_id["message_id"])
-                channel = int(file_id["chat_id"])
-            else:
-                web.json_response({"ok": False, "message": "Invalid file_id"})
-                return
+        logger.debug("before calling get_file_properties")
 
-        if message_id and channel:
-            try:
-                print(channel, message_id)
-                msg = await faster_client.get_messages(
-                    int(channel), message_ids=message_id
-                )
-                assert msg != None
-            except Exception as er:
-                logger.info(f"check tgbot access: {er}")
-                return web.json_response({"message": str(er), "ok": False})
+        file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
+        print(file_id, thumb)
+        logger.debug("after calling get_file_properties")
 
-            logger.debug("before calling get_file_properties")
-
-            file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
-            print(file_id, thumb)
-            logger.debug("after calling get_file_properties")
-
-        elif not file_id:
-            return web.json_response({"ok": False, "message": "Invalid request"})
-        #    if utils.get_hash(file_id.unique_id, 7) != secure_hash:
-        #       logger.debug(f"Invalid hash for message with ID {message_id}")
-        #      raise InvalidHash
-        fileHolder[tagId] = file_id
-
+    #    if utils.get_hash(file_id.unique_id, 7) != secure_hash:
+    #       logger.debug(f"Invalid hash for message with ID {message_id}")
+    #      raise InvalidHash
     file_size = file_id.file_size
 
     if range_header:
@@ -194,9 +168,7 @@ async def media_streamer(
 
     req_length = until_bytes - from_bytes + 1
     part_count = math.ceil(until_bytes / chunk_size) - math.floor(offset / chunk_size)
-    
-    def on_new_fileid(fileId):
-        fileHolder[tagId] = fileId
+
 
     body = tg_connect.yield_file(
         file_id,
@@ -208,7 +180,6 @@ async def media_streamer(
         chunk_size,
         channel_id=channel,
         message_id=message_id,
-        on_new_fileId=on_new_fileid
     )
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)

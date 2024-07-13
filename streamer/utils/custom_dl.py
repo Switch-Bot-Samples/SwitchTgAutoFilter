@@ -203,8 +203,6 @@ class ByteStreamer:
 
         file_id = await self.get_file_properties(channel_id, message_id, False)
         media_session = await self.generate_media_session(client, file_id)
-        if on_new_fileId:
-            on_new_fileId(file_id)
         return file_id, media_session
 
     async def yield_file(
