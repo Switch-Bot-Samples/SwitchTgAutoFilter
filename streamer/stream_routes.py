@@ -178,8 +178,6 @@ async def media_streamer(
         last_part_cut,
         part_count,
         chunk_size,
-        channel_id=channel,
-        message_id=message_id,
     )
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
