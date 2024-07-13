@@ -246,11 +246,33 @@ class ByteStreamer:
         location = await self.get_location(file_id)
 
         try:
-            r = await media_session.invoke(
-                raw.functions.upload.GetFile(
-                    location=location, offset=offset, limit=chunk_size
-                ),
-            )
+            max_try_attempt = 3
+            attempt = 0
+
+            while attempt < max_try_attempt:
+                attempt += 1
+
+                try:
+                    logger.info(f"{attempt=} to get file")
+                    r = await media_session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location, offset=offset, limit=chunk_size
+                        ),
+                    )
+                    break
+                except (
+                    FilerefUpgradeNeeded,
+                    FileReferenceEmpty,
+                    FileReferenceInvalid,
+                    FileIdInvalid,
+                    FileReferenceExpired,
+                ) as er:
+                    logger.error(er)
+                    file_id, media_session = await self.setup_file_ids(
+                        client, index, channel_id, message_id, on_new_fileId
+                    )
+                    location = await self.get_location(file_id)
+
             if isinstance(r, raw.types.upload.File):
                 while True:
                     chunk = r.bytes
@@ -278,16 +300,7 @@ class ByteStreamer:
                     )
         except (TimeoutError, AttributeError):
             pass
-        except (FilerefUpgradeNeeded,
-            FileReferenceEmpty,
-            FileReferenceInvalid,
-            FileIdInvalid,
-            FileReferenceExpired,
-        ) as er:
-            logger.error(er)
-            file_id, media_session = await self.setup_file_ids(
-                client, index, channel_id, message_id, on_new_fileId
-            )
+
         finally:
             logger.debug(f"Finished yielding file with {current_part} parts.")
             work_loads[index] -= 1
