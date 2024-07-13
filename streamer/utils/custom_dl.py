@@ -213,11 +213,8 @@ class ByteStreamer:
         first_part_cut: int,
         last_part_cut: int,
         part_count: int,
-        chunk_size: int,
-        channel_id: int = None,
-        message_id: int = None,
-        on_new_fileId=None,
-    ) -> Union[str, None]:
+        chunk_size: int
+    ):
         """
         Custom generator that yields the bytes of the media file.
         Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
@@ -226,19 +223,7 @@ class ByteStreamer:
         client = self.client
         work_loads[index] += 1
         logger.debug(f"Starting to yielding file with client {index}.")
-        try:
-            media_session = await self.generate_media_session(client, file_id)
-        except (
-            FilerefUpgradeNeeded,
-            FileReferenceEmpty,
-            FileReferenceInvalid,
-            FileIdInvalid,
-            FileReferenceExpired,
-        ) as er:
-            logger.exception(er)
-            file_id, media_session = await self.setup_file_ids(
-                client, index, channel_id, message_id, on_new_fileId
-            )
+        media_session = await self.generate_media_session(client, file_id)
 
         current_part = 1
         location = await self.get_location(file_id)
@@ -266,10 +251,6 @@ class ByteStreamer:
                     FileReferenceExpired,
                 ) as er:
                     logger.error(er)
-                    file_id, media_session = await self.setup_file_ids(
-                        client, index, channel_id, message_id, on_new_fileId
-                    )
-                    location = await self.get_location(file_id)
 
             if isinstance(r, raw.types.upload.File):
                 while True:

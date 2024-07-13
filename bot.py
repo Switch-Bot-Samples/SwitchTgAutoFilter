@@ -156,7 +156,8 @@ async def start(ctx: BotContext[CommandEvent]):
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(app.start())
-loop.run_until_complete(initialize_clients())
+if START_SERVER:
+    loop.run_until_complete(initialize_clients())
 
 tgclient.start()
 # loop.create_task(bt.start())
