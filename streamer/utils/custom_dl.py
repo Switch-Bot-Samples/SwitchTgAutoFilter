@@ -185,6 +185,28 @@ class ByteStreamer:
             )
         return location
 
+    async def setup_file_ids(
+        self, client, index, channel_id, message_id, on_new_fileId=None
+    ):
+        try:
+            # print(channel, message_id)
+            msg = await self.client.get_messages(
+                int(channel_id), message_ids=message_id
+            )
+            assert msg != None
+        except Exception as er:
+            logger.info(f"check tgbot access: {er}")
+            work_loads[index] -= 1
+            return
+
+        logger.debug("before calling get_file_properties")
+
+        file_id = await self.get_file_properties(channel_id, message_id, False)
+        media_session = await self.generate_media_session(client, file_id)
+        if on_new_fileId:
+            on_new_fileId(file_id)
+        return file_id, media_session
+
     async def yield_file(
         self,
         file_id: FileId,
@@ -196,8 +218,8 @@ class ByteStreamer:
         chunk_size: int,
         channel_id: int = None,
         message_id: int = None,
-        on_new_fileId = None
-    ) -> Union[str, None]:       
+        on_new_fileId=None,
+    ) -> Union[str, None]:
         """
         Custom generator that yields the bytes of the media file.
         Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
@@ -213,26 +235,12 @@ class ByteStreamer:
             FileReferenceEmpty,
             FileReferenceInvalid,
             FileIdInvalid,
-            FileReferenceExpired
+            FileReferenceExpired,
         ) as er:
             logger.exception(er)
-            try:
-                # print(channel, message_id)
-                msg = await self.client.get_messages(
-                    int(channel_id), message_ids=message_id
-                )
-                assert msg != None
-            except Exception as er:
-                logger.info(f"check tgbot access: {er}")
-                work_loads[index] -= 1
-                yield None
-
-            logger.debug("before calling get_file_properties")
-
-            file_id = await self.get_file_properties(channel_id, message_id, False)
-            media_session = await self.generate_media_session(client, file_id)
-            if on_new_fileId:
-                on_new_fileId(file_id)
+            file_id, media_session = await self.setup_file_ids(
+                client, index, channel_id, message_id, on_new_fileId
+            )
 
         current_part = 1
         location = await self.get_location(file_id)
@@ -270,6 +278,16 @@ class ByteStreamer:
                     )
         except (TimeoutError, AttributeError):
             pass
+        except (FilerefUpgradeNeeded,
+            FileReferenceEmpty,
+            FileReferenceInvalid,
+            FileIdInvalid,
+            FileReferenceExpired,
+        ) as er:
+            logger.error(er)
+            file_id, media_session = await self.setup_file_ids(
+                client, index, channel_id, message_id, on_new_fileId
+            )
         finally:
             logger.debug(f"Finished yielding file with {current_part} parts.")
             work_loads[index] -= 1
