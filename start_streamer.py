@@ -1,10 +1,13 @@
 from config import BIND_ADDRESS, STREAM_PORT
 from aiohttp import web
-import logging
+import logging, pyrogram
 from asyncio import get_event_loop
 from tclient import initialize_clients, tgclient
 from aiohttp.web import AppRunner,TCPSite
 from streamer import web_server
+
+pyrogram.utils.MIN_CHAT_ID = -999999999999
+pyrogram.utils.MIN_CHANNEL_ID = -100999999999999
 
 async def start_web_server():
     server = AppRunner(web_server())

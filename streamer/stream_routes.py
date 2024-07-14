@@ -109,7 +109,6 @@ async def media_streamer(
 
     range_header = request.headers.get("Range", 0)
 
-    index = min(work_loads, key=work_loads.get)
     if not class_cache.get(0):
         class_cache[0] = utils.ByteStreamer(bot)
 
@@ -124,24 +123,10 @@ async def media_streamer(
         tg_connect = utils.ByteStreamer(faster_client)
         class_cache[faster_client] = tg_connect
 
-    if message_id and channel:
-        try:
-            #             print(channel, message_id)
-            msg = await faster_client.get_messages(int(channel), message_ids=message_id)
-            assert msg != None
-        except Exception as er:
-            logger.info(f"check tgbot access: {er}")
-            return web.json_response({"message": str(er), "ok": False})
+    logger.debug("before calling get_file_properties")
+    file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
+    logger.debug("after calling get_file_properties")
 
-        logger.debug("before calling get_file_properties")
-
-        file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
-        print(file_id, thumb)
-        logger.debug("after calling get_file_properties")
-
-    #    if utils.get_hash(file_id.unique_id, 7) != secure_hash:
-    #       logger.debug(f"Invalid hash for message with ID {message_id}")
-    #      raise InvalidHash
     file_size = file_id.file_size
 
     if range_header:
