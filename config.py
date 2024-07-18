@@ -107,7 +107,7 @@ LOG_STR += (
 LOG_STR += f"Your current IMDB template is {IMDB_TEMPLATE}"
 
 
-START_SERVER = is_enabled(environ.get("START_SERVER", "True"), False)
+START_SERVER = is_enabled(environ.get("START_SERVER", "False"), False)
 BIND_ADDRESS = environ.get("BIND_ADDRESS", "0.0.0.0")
 PORT = environ.get("PORT", "1500")
 STREAM_PORT = environ.get("STREAM_PORT", PORT)

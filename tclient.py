@@ -8,7 +8,8 @@ import asyncio, logging
 logger = logging.getLogger("clients")
 
 tgclient = Client(
-    "bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, no_updates=True
+    ":memory:", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, no_updates=True,
+    in_memory=True
 )
 
 SLEEP_THRESHOLD = 360
