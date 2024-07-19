@@ -2,14 +2,17 @@ from pyrogram import Client
 from tgconfig import BOT_TOKEN, API_ID, API_HASH, USE_TG_CLIENT
 from streamer.utils.constants import multi_clients, work_loads
 from os import environ, path, mkdir
+from sys import argv
 
 import asyncio, logging
 
 logger = logging.getLogger("clients")
 
 tgclient = Client(
-    ":memory:", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, no_updates=True,
-    in_memory=True
+    "bot2" if argv[-1] == "start_streamer.py" else "bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN,
 )
 
 SLEEP_THRESHOLD = 360
