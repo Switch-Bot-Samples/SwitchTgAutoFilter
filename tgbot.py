@@ -28,7 +28,7 @@ class Bot(Client):
             api_id=API_ID,
             api_hash=API_HASH,
             bot_token=BOT_TOKEN,
-            workers=200,
+            workers=20,
             plugins={"root": "tgplugins"},
             sleep_threshold=10,
         )

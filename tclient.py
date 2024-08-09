@@ -43,7 +43,7 @@ async def initialize_clients():
             if client_id == len(all_tokens):
                 await asyncio.sleep(2)
                 print("This will take some time, please wait...")
-
+            
             client = await Client(
                 name=str(client_id),
                 api_id=API_ID,
@@ -53,7 +53,20 @@ async def initialize_clients():
                 workdir=sessions_dir if USE_SESSION_FILE else Client.PARENT_DIR,
                 no_updates=True,
                 in_memory=not USE_SESSION_FILE,
+                workers=32,
+                max_concurrent_transmissions=80
             ).start()
+            """
+            client = Telegram(
+                api_id=API_ID,
+                api_hash=API_HASH,
+                bot_token=token,
+                database_encryption_key=str(client_id),
+                use_message_database=False,
+                
+            )
+            client.login()"""
+
             work_loads[client_id] = 0
             return client_id, client
         except Exception:

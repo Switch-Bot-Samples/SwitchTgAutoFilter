@@ -1,3 +1,6 @@
+#import uvloop
+#uvloop.install()
+
 from config import BIND_ADDRESS, STREAM_PORT
 from aiohttp import web
 import logging, pyrogram
@@ -5,6 +8,8 @@ from asyncio import get_event_loop
 from tclient import initialize_clients, tgclient
 from aiohttp.web import AppRunner,TCPSite
 from streamer import web_server
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(), logging.FileHandler("bot.log")])
 
 pyrogram.utils.MIN_CHAT_ID = -999999999999
 pyrogram.utils.MIN_CHANNEL_ID = -100999999999999

@@ -33,7 +33,6 @@ async def get_file_ids(
     setattr(file_id, "mime_type", getattr(media, "mime_type", ""))
     setattr(file_id, "file_name", getattr(media, "file_name", "thumb.png"))
     setattr(file_id, "unique_id", file_unique_id)
-    print(file_id)
     return file_id
 
 

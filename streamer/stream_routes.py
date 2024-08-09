@@ -5,6 +5,7 @@ import pyrogram
 import re
 import time, asyncio, json
 import math
+from asyncio import Queue
 import logging
 from random import choice
 from streamer import utils
@@ -14,7 +15,8 @@ from pyrogram.errors import (
     FileReferenceExpired,
     FilerefUpgradeNeeded,
 )
-
+from pyrogram import raw
+from telegram.client import Telegram
 from os import getenv
 import mimetypes
 from aiohttp.web import Request
@@ -96,6 +98,118 @@ async def __stream_handler(request: web.Request, thumb=False):
 
 class_cache = {}
 fileHolder = {}
+from itertools import cycle
+'''
+
+async def yield_complete_part(part_count, channel_id, message_id, offset, chunk_size, threads: int = 5):
+    tasks = []
+    current_part = 1
+    clients = cycle(multi_clients.values())  # Assuming multi_clients is a predefined dictionary
+
+    while current_part <= part_count:
+        client = next(clients)
+        task = asyncio.create_task(
+            yield_files(client, channel_id, message_id, current_part, offset, chunk_size)
+        )
+        tasks.append((current_part, task))
+        offset += chunk_size
+
+        if len(tasks) >= threads:
+            for part, task in sorted(tasks, key=lambda x: x[0]):
+                await asyncio.wait([task], return_when=asyncio.ALL_COMPLETED)
+                yield task.result()[1]
+                tasks.remove((part, task))
+                break
+
+        current_part += 1
+
+    # Handle any remaining tasks
+    for part, task in sorted(tasks, key=lambda x: x[0]):
+        await asyncio.wait([task], return_when=asyncio.ALL_COMPLETED)
+        yield task.result()[1]
+
+async def yield_files(client, channel_id, message_id, current_part, offset, chunk_size):
+    if client in class_cache:
+        streamer = class_cache[client]
+    else:
+        streamer = utils.ByteStreamer(client)
+        class_cache[client] = streamer
+
+    file_id = await streamer.generate_file_properties(channel_id, message_id, thumb=False)
+    media_session = await streamer.generate_media_session(client, file_id)
+    location = await streamer.get_location(file_id)
+
+    r = await media_session.invoke(
+        raw.functions.upload.GetFile(
+            location=location, offset=offset, limit=chunk_size
+        ),
+    )
+    
+    if isinstance(r, raw.types.upload.File):
+        chunk = r.bytes
+        return (current_part, chunk)
+
+'''
+async def yield_complete_part(part_count, channel_id, message_id, offset, chunk_size, threads: int = 5):
+    tasks = []
+    current_part = 1
+    clients = cycle(multi_clients.values())
+
+    while current_part <= part_count:
+        tasks.append(
+            (current_part, asyncio.create_task(yield_files(next(clients), channel_id, message_id, current_part, offset, chunk_size)
+        )))
+        offset += chunk_size
+
+        if len(tasks) == threads:
+            for task in sorted(tasks, key=lambda x: x[0]):
+                while not task[1].done():
+                    await asyncio.sleep(0)
+                current_part += 1
+#                if current_part <= part_count:
+#                    tasks.append(
+ #               (current_part, asyncio.create_task(yield_files(next(clients), channel_id, message_id, current_part, offset, chunk_size)
+  #          )))
+                yield task[1].result()[1]
+                tasks.remove(task)
+                break
+        else:
+
+           current_part += 1
+        """
+            resp = await asyncio.gather(*tasks)
+            for part, chunk in resp:
+                yield chunk
+            tasks.clear()
+        """
+#        current_part += 1
+        
+    if tasks:
+        for task in sorted(tasks, key=lambda x: x[0]):
+            while not task[1].done():
+                await asyncio.sleep(0)
+            yield task[1].result()[1]
+
+
+async def yield_files(client, channel_id, message_id, current_part, offset, chunk_size):
+        if client in class_cache:
+            streamer = class_cache[client]
+        else:
+            streamer = utils.ByteStreamer(client)
+            class_cache[client] = streamer
+
+        file_id = await streamer.generate_file_properties(channel_id, message_id, thumb=False)
+        media_session = await streamer.generate_media_session(client, file_id)
+        location = await streamer.get_location(file_id)
+
+        r = await media_session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location, offset=offset, limit=chunk_size
+                        ),
+            )
+        if isinstance(r, raw.types.upload.File):
+            chunk = r.bytes
+            return (current_part, chunk)     
 
 
 async def media_streamer(
@@ -113,6 +227,7 @@ async def media_streamer(
         class_cache[0] = utils.ByteStreamer(bot)
 
     index = min(work_loads, key=work_loads.get)
+#    print(work_loads, multi_clients)0
     faster_client = multi_clients[index]
 
     if faster_client in class_cache:
@@ -124,10 +239,20 @@ async def media_streamer(
         class_cache[faster_client] = tg_connect
 
     logger.debug("before calling get_file_properties")
+ #   faster_client: Telegram
+  #  res = faster_client.call_method("getMessageLinkInfo", {"url": f"https://t.me/{channel}/{message_id}"})
+   # res.wait()
+#    print(res.update, res.error_info)
+#    file_id = res.update["message"]["content"]['video']['video']['id']
+#    print(fileId)
+ #   return web.json_response(res.update)
+  #  exit()
+
     file_id = await tg_connect.get_file_properties(channel, message_id, thumb)
     logger.debug("after calling get_file_properties")
 
     file_size = file_id.file_size
+#     file_size = res.update["message"]["content"]['video']['video']['size']
 
     if range_header:
         from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
@@ -144,7 +269,7 @@ async def media_streamer(
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
-    chunk_size = 1024 * 1024
+    chunk_size = 1024 * 256
     until_bytes = min(until_bytes, file_size - 1)
 
     offset = from_bytes - (from_bytes % chunk_size)
@@ -155,17 +280,22 @@ async def media_streamer(
     part_count = math.ceil(until_bytes / chunk_size) - math.floor(offset / chunk_size)
 
 
-    body = tg_connect.yield_file(
+    """body = tg_connect.yield_file(
         file_id,
+        channel,
+        message_id,
         index,
         offset,
         first_part_cut,
         last_part_cut,
         part_count,
         chunk_size,
-    )
+    )"""
+    body = yield_complete_part(part_count, channel, message_id, offset, chunk_size)
+#    mime_type = res.update["message"]["content"]['video']['mime_type']
     mime_type = file_id.mime_type
     file_name = utils.get_name(file_id)
+ #   file_name = res.update["message"]["content"]['video']['file_name']
 
     print(file_name, mime_type, file_id)
     disposition = "attachment"
@@ -175,6 +305,8 @@ async def media_streamer(
 
     if "video/" in mime_type or "audio/" in mime_type or "/html" in mime_type:
         disposition = "inline"
+    
+    print(range_header, from_bytes, until_bytes, file_size, req_length)
 
     return web.Response(
         status=206 if range_header else 200,

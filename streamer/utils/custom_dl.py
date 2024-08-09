@@ -8,6 +8,8 @@ from .constants import work_loads
 from .file_properties import get_file_ids
 from pyrogram.session import Session, Auth
 from pyrogram.errors import AuthBytesInvalid
+from itertools import cycle
+from streamer.utils.constants import multi_clients
 from streamer.exceptions import FIleNotFound
 from pyrogram.file_id import FileId, FileType, ThumbnailSource
 from pyrogram.errors import (
@@ -65,6 +67,13 @@ class ByteStreamer:
         Generates the properties of a media file on a specific message.
         returns ths properties in a FIleId class.
         """
+        if self.cached_file_ids.get(channel, {}).get(message_id, {}).get(
+            "file" if not thumb else "thumb"
+        ):
+            return self.cached_file_ids[channel][message_id][
+                "file" if not thumb else "thumb"
+            ]
+
         file_id = await get_file_ids(self.client, channel, message_id, thumb=thumb)
         logger.debug(
             f"Generated file ID and Unique ID for message with ID {message_id}"
@@ -205,29 +214,127 @@ class ByteStreamer:
         media_session = await self.generate_media_session(client, file_id)
         return file_id, media_session
 
+    async def call_get_file(self, client, channel_id, message_id, current_part, offset, chunk_size):
+        file_id = await self.generate_file_properties(channel_id, message_id, thumb=False)
+        media_session = await self.generate_media_session(client, file_id)
+        location = await self.get_location(file_id)
+
+        r = await media_session.invoke(
+                        raw.functions.upload.GetFile(
+                            location=location, offset=offset, limit=chunk_size
+                        ),
+            )
+        if isinstance(r, raw.types.upload.File):
+            chunk = r.bytes
+            return (current_part, chunk)       
+
     async def yield_file(
         self,
         file_id: FileId,
+        channel: str,
+        message_id: int,
         index: int,
         offset: int,
         first_part_cut: int,
         last_part_cut: int,
         part_count: int,
-        chunk_size: int
+        chunk_size: int,
+        throttle: int = 5,
+        threads: int = 5
     ):
         """
         Custom generator that yields the bytes of the media file.
         Modded from <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/telegram/utils/custom_download.py#L20>
         Thanks to Eyaadh <https://github.com/eyaadh>
         """
-        client = self.client
+        
+#        from telegram.client import Telegram
+        client =  self.client
         work_loads[index] += 1
+        clients = cycle(list(multi_clients.values()))
         logger.debug(f"Starting to yielding file with client {index}.")
-        media_session = await self.generate_media_session(client, file_id)
+#        media_session = await self.generate_media_session(client, file_id)
 
         current_part = 1
-        location = await self.get_location(file_id)
+        tasks = []
+        while current_part <= part_count:
+            tasks.append(self.call_get_file(next(clients), channel, message_id, current_part, offset, chunk_size))
+            current_part += 1
+            offset += chunk_size
 
+            if len(tasks) == threads:
+                response = await asyncio.gather(*tasks)
+                new_chunk = b""
+                for part in sorted(response, key=lambda x: x[0]):
+                    yield part[1]
+                tasks.clear()
+                yield new_chunk
+
+        if tasks:
+            response = await asyncio.gather(*tasks)
+
+            for part in sorted(response, key=lambda x: x[0]):
+                yield part[1]
+            
+            
+
+        """
+        while current_part <= part_count:
+            res = client.call_method(
+                "downloadFile", {
+                    "file_id": file_id,
+                    "priority": 32,
+                    "offset": offset,
+                    "limit": chunk_size,
+                    "synchronous": True
+                },
+                block=True
+            )
+            res.wait()
+            print(res.update, res.error_info)
+            path = res.update["local"]["path"]
+            import os
+            offset += os.path.getsize(path)
+
+            with open(path, "rb") as f:
+                yield f.read()
+
+            os.remove(path)
+#            yield b''
+            current_part += 1 
+            
+        location = await self.get_location(file_id)
+        print(part_count, current_part)
+        new_chunk = b""
+        new_chunk_size = chunk_size * throttle
+        while current_part <= part_count:
+            logger.info(f"{current_part} to get file")
+            
+
+            
+#            print(r)
+            if isinstance(r, raw.types.upload.File):
+                    chunk = r.bytes
+                    new_chunk += chunk
+                    if not new_chunk:
+                        break
+                    if len(new_chunk) <= new_chunk_size:
+                        continue
+
+#                     yield new_chunk
+                    
+                    if part_count == 1:
+                        yield new_chunk[first_part_cut:last_part_cut]
+                    elif current_part == 1:
+                        yield new_chunk[first_part_cut:]
+                    elif current_part == part_count:
+                        yield new_chunk[:last_part_cut]
+                    else:
+                        yield new_chunk
+                    
+
+                    current_part += 1
+                    offset += chunk_size
         try:
             max_try_attempt = 3
             attempt = 0
@@ -282,7 +389,7 @@ class ByteStreamer:
 
         finally:
             logger.debug(f"Finished yielding file with {current_part} parts.")
-            work_loads[index] -= 1
+            work_loads[index] -= 1"""
 
     async def clean_cache(self) -> None:
         """
