@@ -9,14 +9,7 @@ from asyncio import Queue
 import logging
 from random import choice
 from streamer import utils
-from pyrogram.errors import (
-    FileIdInvalid,
-    FileReferenceEmpty,
-    FileReferenceExpired,
-    FilerefUpgradeNeeded,
-)
 from pyrogram import raw
-from telegram.client import Telegram
 from os import getenv
 import mimetypes
 from aiohttp.web import Request

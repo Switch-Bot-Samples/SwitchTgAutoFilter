@@ -5,6 +5,7 @@ from tgbot import bt
 from tclient import tgclient, initialize_clients
 import os
 from config import DISABLE_FORCE, START_SERVER, BIND_ADDRESS, STREAM_PORT
+from tgconfig import DUAL_SERVER
 import swibots
 from common import SW_COMMUNITY
 from streamer import web_server
@@ -156,7 +157,8 @@ async def start(ctx: BotContext[CommandEvent]):
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(app.start())
-if START_SERVER:
+
+if START_SERVER and not DUAL_SERVER:
     loop.run_until_complete(initialize_clients())
 
 tgclient.start()

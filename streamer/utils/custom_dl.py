@@ -248,12 +248,10 @@ class ByteStreamer:
         Thanks to Eyaadh <https://github.com/eyaadh>
         """
         
-#        from telegram.client import Telegram
         client =  self.client
         work_loads[index] += 1
         clients = cycle(list(multi_clients.values()))
         logger.debug(f"Starting to yielding file with client {index}.")
-#        media_session = await self.generate_media_session(client, file_id)
 
         current_part = 1
         tasks = []
