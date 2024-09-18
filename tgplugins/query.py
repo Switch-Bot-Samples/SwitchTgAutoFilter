@@ -171,7 +171,8 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
         await query.message.delete()
-
+    elif query.data == "alert_pm":
+        await query.answer("Check in private message,I have sent files in private message", show_alert=True)
     elif query.data == "delallconfirm":
         userid = query.from_user.id
         chat_type = query.message.chat.type

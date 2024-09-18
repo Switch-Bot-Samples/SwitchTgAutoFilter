@@ -35,6 +35,7 @@ from utils import (
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
 from tgplugins.group_filter import global_filters
+from tgconfig import DISABLE_PM_SEARCH, SEND_FILE_PM
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -46,6 +47,9 @@ logger.setLevel(logging.ERROR)
     else filters.text & filters.private
 )
 async def auto_pm_fill(b, m):
+    if DISABLE_PM_SEARCH:
+        return
+
     if PMFILTER:
         if G_FILTER:
             kd = await global_filters(b, m)
@@ -210,6 +214,9 @@ async def pm_next_page(bot, query):
     filters.create(lambda _, __, query: query.data.startswith("pmspolling"))
 )
 async def pm_spoll_tester(bot, query):
+    if DISABLE_PM_SEARCH:
+        return
+
     _, user, movie_ = query.data.split("#")
     if movie_ == "close_spellcheck":
         return await query.message.delete()

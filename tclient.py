@@ -56,31 +56,18 @@ async def initialize_clients():
                 workers=32,
                 max_concurrent_transmissions=80
             ).start()
-            """
-            client = Telegram(
-                api_id=API_ID,
-                api_hash=API_HASH,
-                bot_token=token,
-                database_encryption_key=str(client_id),
-                use_message_database=False,
-                
-            )
-            client.login()"""
 
             work_loads[client_id] = 0
             return client_id, client
         except Exception:
             logger.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
 
-    print(all_tokens)
     clients = await asyncio.gather(
         *[start_client(i, token) for i, token in all_tokens.items()]
     )
 
-    print(multi_clients)
     multi_clients.update(dict(clients))
     if len(multi_clients) != 1:
-        MULTI_CLIENT = True
         logger.info("Multi-client mode enabled")
     else:
         logger.info("No additional clients were initialized, using default client")

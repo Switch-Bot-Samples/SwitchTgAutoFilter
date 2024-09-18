@@ -8,7 +8,7 @@ class Database:
         self.db = self._client[database_name]
         self.col = self.db.users
         self.grp = self.db.groups
-
+        self.auth_chats = self.db.authorized_chats  # New collection for authorized chats
 
     def new_user(self, id, name):
         return dict(
@@ -144,5 +144,19 @@ class Database:
     async def get_db_size(self):
         return (await self.db.command("dbstats"))['dataSize']
 
+
+    async def add_authorized_chat(self, chat_id):
+        chat = {"id": int(chat_id)}
+        await self.auth_chats.update_one({"id": int(chat_id)}, {"$set": chat}, upsert=True)
+
+    async def is_chat_authorized(self, chat_id):
+        chat = await self.auth_chats.find_one({"id": int(chat_id)})
+        return bool(chat)
+
+    async def remove_authorized_chat(self, chat_id):
+        await self.auth_chats.delete_one({"id": int(chat_id)})
+
+    async def get_all_authorized_chats(self):
+        return [chat["id"] async for chat in self.auth_chats.find()]
 
 db = Database(DATABASE_URL, DATABASE_NAME)

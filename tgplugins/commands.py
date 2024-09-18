@@ -791,6 +791,56 @@ async def save_template(client, message):
     await save_group_settings(grp_id, "template", template)
     await sts.edit(f"Sᴜᴄᴄᴇssғᴜʟʟʏ Cʜᴀɴɢᴇᴅ Tᴇᴍᴘʟᴀᴛᴇ Fᴏʀ {title} Tᴏ\n\n{template}")
 
+@Client.on_message(filters.command("authorize") & filters.user(ADMINS))
+async def authorize(client: Client, message: Message):
+    if len(message.command) == 2:
+        chat_id = int(message.command[1])
+    else:
+        chat_id = message.chat.id
+    
+    try:
+        chat = await client.get_chat(chat_id)
+        await db.add_chat(chat.id, chat.title, chat.username)
+        await message.reply_text(f"Successfully authorized {chat.title}")
+        await client.send_message(
+            LOG_CHANNEL,
+            script.LOG_TEXT_G.format(
+                a=chat.title,
+                b=chat.id,
+                c=chat.username,
+                d=await client.get_chat_members_count(chat.id),
+                f=client.mention,
+                e="Authorized",
+            ),
+        )
+    except Exception as e:
+        await message.reply_text(f"Error: {str(e)}")
+
+@Client.on_message(filters.command("unauthorize") & filters.user(ADMINS))
+async def unauthorize(client: Client, message: Message):
+    if len(message.command) == 2:
+        chat_id = int(message.command[1])
+    else:
+        chat_id = message.chat.id
+    
+    try:
+        chat = await client.get_chat(chat_id)
+        await db.remove_chat(chat.id)
+        await message.reply_text(f"Successfully unauthorized {chat.title}")
+        await client.send_message(
+            LOG_CHANNEL,
+            script.LOG_TEXT_G.format(
+                a=chat.title,
+                b=chat.id,
+                c=chat.username,
+                d=await client.get_chat_members_count(chat.id),
+                f=client.mention,
+                e="Unauthorized",
+            ),
+        )
+    except Exception as e:
+        await message.reply_text(f"Error: {str(e)}")
+
 
 @Client.on_message(filters.command("get_template"))
 async def geg_template(client, message):

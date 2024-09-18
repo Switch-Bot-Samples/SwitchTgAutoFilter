@@ -7,7 +7,9 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 from Script import script
 from utils import get_shortlink, admin_filter
 import pyrogram
-
+from pyrogram.client import Client
+from pyrogram.types import Message
+from pyrogram.errors import UserIsBlocked
 from config import SPELL_FILTER
 from database.connections_mdb import (
     active_connection,
@@ -38,6 +40,7 @@ from tgconfig import (
     BUTTON_LOCK_TEXT,
     SHORT_URL,
     SHORT_API,
+    SEND_FILE_PM
 )
 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -293,7 +296,7 @@ async def advantage_spoll_choker(bot, query):
     if AUTH_GROUPS
     else filters.text & filters.incoming & filters.group
 )
-async def give_filter(client, message):
+async def give_filter(client, message):    
     if G_FILTER:
         if G_MODE.get(str(message.chat.id)) == "False":
             return
@@ -315,7 +318,7 @@ async def give_filter(client, message):
                 await auto_filter(client, message)
 
 
-async def auto_filter(client, msg, spoll=False):
+async def auto_filter(client: Client, msg: Message, spoll=False):
     if not spoll:
         message = msg
         settings = await get_settings(message.chat.id)
@@ -339,8 +342,13 @@ async def auto_filter(client, msg, spoll=False):
         settings = await get_settings(msg.message.chat.id)
         message = msg.message.reply_to_message  # msg will be callback query
         search, files, offset, total_results = spoll
+
     pre = "filep" if settings["file_secure"] else "file"
     req = message.from_user.id if message.from_user else 0
+    if SEND_FILE_PM:
+        chat_id = message.from_user.id
+    else:
+        chat_id = message.chat.id
 
     if SHORT_URL and SHORT_API:
         if settings["button"]:
@@ -457,41 +465,71 @@ async def auto_filter(client, msg, spoll=False):
         )
     else:
         cap = f"Hᴇʀᴇ Is Wʜᴀᴛ I Fᴏᴜɴᴅ Fᴏʀ Yᴏᴜʀ Qᴜᴇʀʏ {search}"
+
+    hehe = None
     if imdb and imdb.get("poster"):
         try:
-            hehe = await message.reply_photo(
+            hehe = await client.send_photo(
+                chat_id=chat_id,
+                reply_to_message_id=None if SEND_FILE_PM else message.id,
                 photo=imdb.get("poster"),
                 caption=cap,
                 reply_markup=InlineKeyboardMarkup(btn),
+                protect_content=PROTECT_CONTENT
             )
-            await asyncio.sleep(IMDB_DELET_TIME)
-            await hehe.delete()
-            await message.delete()
         except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
             pic = imdb.get("poster")
             poster = pic.replace(".jpg", "._V1_UX360.jpg")
-            hmm = await message.reply_photo(
-                photo=poster, caption=cap, reply_markup=InlineKeyboardMarkup(btn)
+            hehe = await client.send_photo(
+                chat_id=chat_id,
+                reply_to_message_id=None if SEND_FILE_PM else message.id,
+                photo=poster, caption=cap, reply_markup=InlineKeyboardMarkup(btn),
+                protect_content=PROTECT_CONTENT
             )
-            await asyncio.sleep(IMDB_DELET_TIME)
-            await hmm.delete()
-            await message.delete()
+        except UserIsBlocked:
+            await message.reply_text(
+                text="User has Blocked Me 😔\n\nPlease Unblock me to send files in PM",
+                quote=True
+            )
         except Exception as e:
             logger.exception(e)
-            cdb = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-            await asyncio.sleep(IMDB_DELET_TIME)
-            await cdb.delete()
-            await message.delete()
+            hehe = await client.send_message(
+                chat_id=chat_id,
+                reply_to_message_id=None if SEND_FILE_PM else message.id,
+                text=cap, reply_markup=InlineKeyboardMarkup(btn),
+                protect_content=PROTECT_CONTENT
+            )
     else:
-        crl = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
-        await asyncio.sleep(IMDB_DELET_TIME)
-        await crl.delete()
-        await message.delete()
+        hehe = await client.send_message(
+            chat_id=chat_id,
+            reply_to_message_id=None if SEND_FILE_PM else message.id,
+            text=cap, reply_markup=InlineKeyboardMarkup(btn),
+            protect_content=PROTECT_CONTENT
+        )
+        
+
+    if SEND_FILE_PM:
+        await message.reply_text(
+            """Check in private message,I have sent files in private message 
+
+Private message parunga.neega keta file send paniten
+
+👇Click This Button""",
+            reply_markup=InlineKeyboardMarkup(
+                [[
+                    InlineKeyboardButton("🔗 Check in PM 🔗", callback_data="alert_pm")]]),
+                    quote=True
+        )
+    await asyncio.sleep(IMDB_DELET_TIME)
+    if hehe:
+        await hehe.delete()
+    await message.delete()
+
     if spoll:
         await msg.message.delete()
 
 
-async def advantage_spell_chok(msg):
+async def advantage_spell_chok(msg: Message):
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
         "",
@@ -586,9 +624,13 @@ async def advantage_spell_chok(msg):
             )
         ]
     )
-    await msg.reply(
-        "I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏᴛʜɪɴɢ Rᴇʟᴀᴛᴇᴅ Tᴏ Tʜᴀᴛ. Dɪᴅ Yᴏᴜ Mᴇᴀɴ Aɴʏ Oɴᴇ Oғ Tʜᴇsᴇ?",
+    client: Client = msg.client
+
+    await client.send_message(
+        chat_id=msg.from_user.id if msg.from_user else msg.chat.id,
+        text="I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏᴛʜɪɴɢ Rᴇʟᴀᴛᴇᴅ Tᴏ Tʜᴀᴛ. Dɪᴅ Yᴏᴜ Mᴇᴀɴ Aɴʏ Oɴᴇ Oғ Tʜᴇsᴇ?",
         reply_markup=InlineKeyboardMarkup(btn),
+        protect_content=PROTECT_CONTENT
     )
 
 

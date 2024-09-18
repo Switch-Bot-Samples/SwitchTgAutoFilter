@@ -87,3 +87,6 @@ LOG_MSG = "{} Iꜱ Rᴇsᴛᴀʀᴛᴇᴅ....✨\n\n🗓️ Dᴀᴛᴇ : {}\n⏰
 TG_NO_VERIFY = is_enabled(environ.get('TG_NO_VERIFY', "False"), False)
 USE_TG_CLIENT = is_enabled(environ.get('USE_TG_CLIENT', "True"), True)
 DUAL_SERVER = is_enabled(environ.get("DUAL_SERVER", "False"), False)
+
+DISABLE_PM_SEARCH = is_enabled(environ.get("DISABLE_PM_SEARCH", "False"), False)
+SEND_FILE_PM = is_enabled(environ.get("SEND_FILE_PM", "False"), False)
