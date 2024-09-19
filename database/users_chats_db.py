@@ -1,5 +1,6 @@
+import asyncio
 import motor.motor_asyncio
-from tgconfig import DATABASE_NAME, DATABASE_URL, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, P_TTI_SHOW_OFF, SINGLE_BUTTON, SPELL_CHECK_REPLY, PROTECT_CONTENT, MAX_RIST_BTNS, IMDB_DELET_TIME                  
+from tgconfig import DATABASE_NAME, DATABASE_URL, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, P_TTI_SHOW_OFF, SINGLE_BUTTON, SPELL_CHECK_REPLY, PROTECT_CONTENT, MAX_RIST_BTNS, IMDB_DELET_TIME, AUTH_GROUPS
 
 class Database:
     
@@ -160,3 +161,11 @@ class Database:
         return [chat["id"] async for chat in self.auth_chats.find()]
 
 db = Database(DATABASE_URL, DATABASE_NAME)
+
+async def add_auth_groups():
+    if AUTH_GROUPS:
+        for group_id in AUTH_GROUPS:
+            await db.add_authorized_chat(group_id)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(add_auth_groups())

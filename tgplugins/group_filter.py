@@ -292,11 +292,14 @@ async def advantage_spoll_choker(bot, query):
 
 
 @Client.on_message(
-    filters.group & filters.text & filters.incoming & filters.chat(AUTH_GROUPS)
-    if AUTH_GROUPS
-    else filters.text & filters.incoming & filters.group
+    filters.group & filters.text & filters.incoming & filters.incoming & filters.group
 )
 async def give_filter(client, message):    
+    # Check if the chat is authorized
+    authorized_chats = await db.get_all_authorized_chats()
+    if authorized_chats and message.chat.id not in authorized_chats:
+        return
+
     if G_FILTER:
         if G_MODE.get(str(message.chat.id)) == "False":
             return
