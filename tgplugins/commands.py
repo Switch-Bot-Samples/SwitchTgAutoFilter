@@ -825,7 +825,7 @@ async def unauthorize(client: Client, message: Message):
     
     try:
         chat = await client.get_chat(chat_id)
-        await db.remove_chat(chat.id)
+        await db.remove_authorized_chat(chat.id)
         await message.reply_text(f"Successfully unauthorized {chat.title}")
         await client.send_message(
             LOG_CHANNEL,
@@ -834,7 +834,7 @@ async def unauthorize(client: Client, message: Message):
                 b=chat.id,
                 c=chat.username,
                 d=await client.get_chat_members_count(chat.id),
-                f=client.mention,
+                f=(await client.get_me()).mention,
                 e="Unauthorized",
             ),
         )
