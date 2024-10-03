@@ -129,7 +129,6 @@ async def start(client: Client, message: Message):
             ],
             [
                 InlineKeyboardButton("Sᴇᴀʀᴄʜ 🔎", switch_inline_query_current_chat=""),
-                InlineKeyboardButton("Cʜᴀɴɴᴇʟ 🔈", url="https://t.me/mkn_bots_updates"),
             ],
             [
                 InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
@@ -195,6 +194,16 @@ async def start(client: Client, message: Message):
                 reply_markup=InlineKeyboardMarkup(btn),
                 parse_mode=enums.ParseMode.DEFAULT,
             )
+    
+    if len(message.command) == 2 and message.command[1].startswith("search_"):
+        query = message.command[1].split("_", maxsplit=1)
+        if len(query) > 1:
+            from .pm_filter import pm_AutoFilter
+            query = query[-1]
+            message.text = query
+
+            await pm_AutoFilter(client, message)
+            return
 
     if len(message.command) == 2 and message.command[1] in [
         "subscribe",
@@ -210,8 +219,7 @@ async def start(client: Client, message: Message):
                 )
             ],
             [
-                InlineKeyboardButton("Sᴇᴀʀᴄʜ 🔎", switch_inline_query_current_chat=""),
-                InlineKeyboardButton("Cʜᴀɴɴᴇʟ 🔈", url="https://t.me/mkn_bots_updates"),
+                InlineKeyboardButton("Sᴇᴀʀᴄʜ 🔎", switch_inline_query_current_chat="")
             ],
             [
                 InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),

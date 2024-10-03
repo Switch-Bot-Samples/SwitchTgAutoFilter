@@ -322,6 +322,17 @@ async def give_filter(client, message):
 
 
 async def auto_filter(client: Client, msg: Message, spoll=False):
+    if not getattr(client, "me", None):
+        client.me = await client.get_me()
+
+    if SEND_FILE_PM:
+        await msg.reply_text("Click the below button to continue the search in PM.",
+                             reply_markup=InlineKeyboardMarkup([[
+                                 InlineKeyboardButton("Click here",
+                                                      url=f"https://t.me/{client.me.username}?start=search_{msg.text}")
+                             ]]))
+
+        return
     if not spoll:
         message = msg
         settings = await get_settings(message.chat.id)
