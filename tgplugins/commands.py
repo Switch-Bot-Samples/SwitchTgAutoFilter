@@ -28,7 +28,6 @@ from common import DOMAIN
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 from tgconfig import SEND_PM
-from config import START_SERVER
 
 logger = logging.getLogger(__name__)
 BATCH_FILES = {}
@@ -199,8 +198,9 @@ async def start(client: Client, message: Message):
         query = message.command[1].split("_", maxsplit=1)
         if len(query) > 1:
             from .pm_filter import pm_AutoFilter
+            from urllib.parse import unquote
             query = query[-1]
-            message.text = query
+            message.text = unquote(query)
 
             await pm_AutoFilter(client, message)
             return

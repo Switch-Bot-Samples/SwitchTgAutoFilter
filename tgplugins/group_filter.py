@@ -7,6 +7,7 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 from Script import script
 from utils import get_shortlink, admin_filter
 import pyrogram
+from urllib.parse import quote
 from pyrogram.client import Client
 from pyrogram.types import Message
 from pyrogram.errors import UserIsBlocked
@@ -329,7 +330,7 @@ async def auto_filter(client: Client, msg: Message, spoll=False):
         await msg.reply_text("Click the below button to continue the search in PM.",
                              reply_markup=InlineKeyboardMarkup([[
                                  InlineKeyboardButton("Click here",
-                                                      url=f"https://t.me/{client.me.username}?start=search_{msg.text}")
+                                                      url=f"https://t.me/{client.me.username}?start=search_{quote(msg.text)}")
                              ]]))
 
         return
