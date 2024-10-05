@@ -201,6 +201,7 @@ async def start(client: Client, message: Message):
             from urllib.parse import unquote
             query = query[-1]
             message.text = unquote(query)
+            logger.info(message.text)
 
             await pm_AutoFilter(client, message)
             return
