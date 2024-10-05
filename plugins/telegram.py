@@ -3,7 +3,6 @@ from swibots import BotContext, CommandEvent
 from secrets import token_hex
 from base64 import urlsafe_b64decode
 import logging
-from tclient import tgclient
 from common import waitingHashes, approvedUsers, pHash
 from datetime import datetime
 from pyrogram.types import InlineKeyboardMarkup
@@ -12,6 +11,8 @@ from tgconfig import LOG_CHANNEL
 
 @app.on_command("verify")
 async def verifyHandler(ctx: BotContext[CommandEvent]):
+    from tgbot import bt as tgclient
+
     m = ctx.event.message
     param = ctx.event.params
     user = m.user

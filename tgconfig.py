@@ -1,5 +1,5 @@
 import re, time
-from os import environ
+from os import environ, path, mkdir
 from Script import script 
 
 id_pattern = re.compile(r'^.\d+$')
@@ -90,3 +90,11 @@ DUAL_SERVER = is_enabled(environ.get("DUAL_SERVER", "False"), False)
 
 DISABLE_PM_SEARCH = is_enabled(environ.get("DISABLE_PM_SEARCH", "False"), False)
 SEND_FILE_PM = is_enabled(environ.get("SEND_FILE_PM", "False"), False)
+
+SLEEP_THRESHOLD = 360
+USE_SESSION_FILE = True
+sessions_dir = "sessions"
+
+
+if not path.exists(sessions_dir):
+    mkdir(sessions_dir)

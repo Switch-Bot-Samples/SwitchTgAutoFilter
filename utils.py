@@ -2,8 +2,11 @@ import logging, os, re, asyncio, requests, aiohttp
 from pyrogram.errors import InputUserDeactivated, UserNotParticipant, FloodWait, UserIsBlocked, PeerIdInvalid                             
 from pyrogram.types import Message, InlineKeyboardButton
 from pyrogram import filters, enums
-from tgconfig import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, SHORT_URL, SHORT_API
+from tgconfig import AUTH_CHANNEL, LONG_IMDB_DESCRIPTION, MAX_LIST_ELM, SHORT_URL, SHORT_API, API_HASH, API_ID, SLEEP_THRESHOLD, USE_SESSION_FILE, sessions_dir, USE_TG_CLIENT
+from streamer.utils.constants import multi_clients, work_loads
+from pyrogram.client import Client
 from imdb import Cinemagoer
+from os import environ
 from typing import Union, List
 from datetime import datetime, timedelta
 from database.users_chats_db import db
@@ -361,6 +364,51 @@ async def admin_filter(filt, client, message):
 
 
 
+async def initialize_clients(add_client:Client = None):
+    if USE_TG_CLIENT and add_client:
+        multi_clients[0] = add_client
 
+    all_tokens = dict(
+        (c + 1, t)
+        for c, (_, t) in enumerate(
+            filter(lambda n: n[0].startswith("MULTI_TOKEN"), sorted(environ.items()))
+        )
+    )
+    if not all_tokens:
+        logger.info("No additional clients found, using default client")
+        return
 
+    async def start_client(client_id, token):
+        try:
+            logger.info(f"Starting - Client {client_id}")
+            if client_id == len(all_tokens):
+                await asyncio.sleep(2)
+                print("This will take some time, please wait...")
+            
+            client = await Client(
+                name=str(client_id),
+                api_id=API_ID,
+                api_hash=API_HASH,
+                bot_token=token,
+                sleep_threshold=SLEEP_THRESHOLD,
+                workdir=sessions_dir if USE_SESSION_FILE else Client.PARENT_DIR,
+                no_updates=True,
+                in_memory=not USE_SESSION_FILE,
+                workers=32,
+                max_concurrent_transmissions=80
+            ).start()
 
+            work_loads[client_id] = 0
+            return client_id, client
+        except Exception:
+            logger.error(f"Failed starting Client - {client_id} Error:", exc_info=True)
+
+    clients = await asyncio.gather(
+        *[start_client(i, token) for i, token in all_tokens.items()]
+    )
+
+    multi_clients.update(dict(clients))
+    if len(multi_clients) != 1:
+        logger.info("Multi-client mode enabled")
+    else:
+        logger.info("No additional clients were initialized, using default client")
