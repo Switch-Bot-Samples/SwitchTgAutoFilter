@@ -198,9 +198,8 @@ async def start(client: Client, message: Message):
         query = message.command[1].split("_", maxsplit=1)
         if len(query) > 1:
             from .pm_filter import pm_AutoFilter
-            from urllib.parse import unquote
             query = query[-1]
-            message.text = unquote(query)
+            message.text = query.replace('_', ' ')
             logger.info(message.text)
 
             await pm_AutoFilter(client, message)
