@@ -327,10 +327,12 @@ async def auto_filter(client: Client, msg: Message, spoll=False):
         client.me = await client.get_me()
 
     if SEND_FILE_PM:
+        from base64 import urlsafe_b64encode
+
         await msg.reply_text("Click the below button to continue the search in PM.",
                              reply_markup=InlineKeyboardMarkup([[
                                  InlineKeyboardButton("Click here",
-                                                      url=f"https://t.me/{client.me.username}?start=search_{msg.text.replace(' ', '_')}")
+                                                      url=f"https://t.me/{client.me.username}?start=search_{urlsafe_b64encode(msg.text.encode()).decode()}")
                              ]]))
 
         return

@@ -197,9 +197,11 @@ async def start(client: Client, message: Message):
     if len(message.command) == 2 and message.command[1].startswith("search_"):
         query = message.command[1].split("_", maxsplit=1)
         if len(query) > 1:
+            from base64 import urlsafe_b64decode
             from .pm_filter import pm_AutoFilter
+
             query = query[-1]
-            message.text = query.replace('_', ' ')
+            message.text = urlsafe_b64decode(query).decode()
             logger.info(message.text)
 
             await pm_AutoFilter(client, message)
