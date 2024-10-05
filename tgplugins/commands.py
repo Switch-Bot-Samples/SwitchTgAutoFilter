@@ -201,8 +201,12 @@ async def start(client: Client, message: Message):
             from .pm_filter import pm_AutoFilter
 
             query = query[-1]
-            message.text = urlsafe_b64decode(query).decode()
-            logger.info(message.text)
+            try:
+                message.text = urlsafe_b64decode(query).decode()
+                logger.info(message.text)
+            except UnicodeDecodeError:
+                logger.error("Failed to decode base64 string: invalid encoding")
+                message.text = query
 
             await pm_AutoFilter(client, message)
             return
