@@ -220,7 +220,7 @@ async def media_streamer(
         class_cache[0] = utils.ByteStreamer(bot)
 
     index = min(work_loads, key=work_loads.get)
-#    print(work_loads, multi_clients)0
+#    print(work_loads, multi_clients)
     faster_client = multi_clients[index]
 
     if faster_client in class_cache:

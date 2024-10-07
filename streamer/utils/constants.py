@@ -1,2 +1,2 @@
-work_loads = {0:0}
+work_loads = {}
 multi_clients = {}
