@@ -145,7 +145,30 @@ __version__ = "PROFESSOR-BOT ᴠ4.5.0"
 __license__ = "GNU GENERAL PUBLIC LICENSE V2"
 __copyright__ = "Copyright (C) 2023-present MrMKN <https://github.com/MrMKN>"
 
+async def search_yahoo(text):
+    url = f'https://in.search.yahoo.com/search?p={text}'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    titles = soup.find_all('h3')
+    return [title.getText() for title in titles]
+
+async def search_bing(text):
+    url = f'https://www.bing.com/search?q={text}'
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'html.parser')
+    titles = soup.find_all('h2')
+    return [title.getText() for title in titles]
+
 async def search_gagala(text):
+    result = await search_google(text)
+    if not result or len(result) < 3:
+        result.extend(await search_bing(text))
+    if not result or len(result) < 3:
+        result.extend(await search_yahoo(text))
+    return result
+
+async def search_google(text):
     usr_agent = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
         'Chrome/61.0.3163.100 Safari/537.36'
@@ -157,7 +180,6 @@ async def search_gagala(text):
     soup = BeautifulSoup(response.text, 'html.parser')
     titles = soup.find_all( 'h3' )
     return [title.getText() for title in titles]
-
 
 async def get_settings(group_id):
     settings = temp.SETTINGS.get(group_id)
@@ -367,6 +389,7 @@ async def admin_filter(filt, client, message):
 async def initialize_clients(add_client:Client = None):
     if USE_TG_CLIENT and add_client:
         multi_clients[0] = add_client
+        work_loads[0] = 0
 
     all_tokens = dict(
         (c + 1, t)
@@ -407,7 +430,8 @@ async def initialize_clients(add_client:Client = None):
         *[start_client(i, token) for i, token in all_tokens.items()]
     )
 
-    multi_clients.update(dict(clients))
+    if clients:
+        multi_clients.update(dict(clients))
     if len(multi_clients) != 1:
         logger.info("Multi-client mode enabled")
     else:
