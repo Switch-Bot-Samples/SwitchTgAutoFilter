@@ -500,12 +500,6 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         )
 
 
-@Client.on_message(filters.command("logs") & filters.user(ADMINS))
-async def log_file(bot, message):
-    try:
-        await message.reply_document("BotLog.txt")
-    except Exception as e:
-        await message.reply(str(e))
 
 
 @Client.on_message(filters.command("restart") & filters.user(ADMINS))
