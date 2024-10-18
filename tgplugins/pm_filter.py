@@ -423,8 +423,10 @@ async def pm_spoll_choker(msg):
         flags=re.IGNORECASE,
     )  # plis contribute some common words
     query = query.strip() + " movie"
+    logger.info(f"Searching for: {query}")
     g_s = await search_gagala(query)
     g_s += await search_gagala(msg.text)
+    logger.info(f"Search results: {g_s}")
     gs_parsed = []
     if not g_s:
         k = await msg.reply("I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏ Mᴏᴠɪᴇ Iɴ Tʜᴀᴛ Nᴀᴍᴇ", quote=True)
