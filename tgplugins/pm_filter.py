@@ -25,20 +25,16 @@ from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid
 from utils import (
     get_size,
-    is_subscribed,
     get_poster,
     search_gagala,
     temp,
-    get_settings,
-    save_group_settings,
 )
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
 from tgplugins.group_filter import global_filters
-from tgconfig import DISABLE_PM_SEARCH, SEND_FILE_PM
+from tgconfig import DISABLE_PM_SEARCH
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
 
 
 @Client.on_message(
