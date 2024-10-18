@@ -60,6 +60,7 @@ from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
 from database.filters_mdb import del_all, find_filter, get_filters
 from database.gfilters_mdb import find_gfilter, get_gfilters
+from rapidfuzz import fuzz, process
 
 logger = logging.getLogger(__name__)
 
@@ -551,63 +552,83 @@ async def advantage_spell_chok(msg: Message):
         "",
         msg.text,
         flags=re.IGNORECASE,
-    )  # plis contribute some common words
+    )
     query = query.strip() + " movie"
     logger.info(f"Searching for: {query}")
     g_s = await search_gagala(query)
     g_s += await search_gagala(msg.text)
     logger.info(f"Search results: {g_s}")
-    gs_parsed = []
+    
     if not g_s:
         k = await msg.reply("I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏ Mᴏᴠɪᴇ Iɴ Tʜᴀᴛ Nᴀᴍᴇ")
         await asyncio.sleep(8)
         return await k.delete()
-    regex = re.compile(
-        r".*(imdb|wikipedia).*", re.IGNORECASE
-    )  # look for imdb / wiki results
-    gs = list(filter(regex.match, g_s))
-    gs_parsed = [
-        re.sub(
-            r"\b(\-([a-zA-Z-\s])\-\simdb|(\-\s)?imdb|(\-\s)?wikipedia|\(|\)|\-|reviews|full|all|episode(s)?|film|movie|series)",
-            "",
-            i,
-            flags=re.IGNORECASE,
-        )
-        for i in gs
-    ]
-    if not gs_parsed:
-        reg = re.compile(
-            r"watch(\s[a-zA-Z0-9_\s\-\(\)]*)*\|.*", re.IGNORECASE
-        )  # match something like Watch Niram | Amazon Prime
-        for mv in g_s:
-            match = reg.match(mv)
+
+    def extract_movie_name(result):
+        patterns = [
+            r'(?:.*?›.*?)?([^›]+?)\s*\(\d{4}\)',
+            r'(?:.*?›.*?)?([^›]+?)\s*-\s*(?:IMDb|Wikipedia|BookMyShow)',
+            r'Watch\s+([^›]+?)\s*(?:-|\|)',
+            r'(?:.*?›.*?)?([^›]+?)\s*(?:Full Movie|Movie)',
+            r'(?:.*?›.*?)?([^›]+?)\s*\|\s*.*?(?:Movie|Film)',
+            r'(?:OFFICIAL.*?MOVIE\s*-\s*)([^›]+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, result, re.IGNORECASE)
             if match:
-                gs_parsed.append(match.group(1))
-    user = msg.from_user.id if msg.from_user else 0
-    movielist = []
-    gs_parsed = list(
-        dict.fromkeys(gs_parsed)
-    )  # removing duplicates https://stackoverflow.com/a/7961425
-    if len(gs_parsed) > 3:
-        gs_parsed = gs_parsed[:3]
-    if gs_parsed:
-        for mov in gs_parsed:
-            imdb_s = await get_poster(
-                mov.strip(), bulk=True
-            )  # searching each keyword in imdb
-            if imdb_s:
-                movielist += [movie.get("title") for movie in imdb_s]
-    movielist += [
-        (re.sub(r"(\-|\(|\)|_)", "", i, flags=re.IGNORECASE)).strip() for i in gs_parsed
-    ]
-    movielist = list(dict.fromkeys(movielist))  # removing duplicates
-    if not movielist:
+                return match.group(1).strip()
+        
+        return None
+
+    def clean_movie_name(name):
+        name = re.sub(r'^.*?›\s*', '', name)
+        name = re.sub(r'^.*?(?:tt\d+|www\.[^›]+›)', '', name)
+        name = re.sub(r"(\-|\(|\)|_)", " ", name)
+        name = re.sub(r"\b(imdb|wikipedia|reviews|full|all|episode(s)?|film|movie|series|official|trailer|video song|videos|songs)\b", "", name, flags=re.IGNORECASE)
+        name = re.sub(r'\|.*', '', name)
+        name = re.sub(r'\d{4}\s*AD', '', name)
+        name = re.sub(r'\s+', ' ', name).strip()
+        name = re.sub(r'\s+\d{4}$', '', name)
+        name = re.sub(r'(.+?)\1+', r'\1', name)
+        
+        invalid_entries = ['images', 'videos', 'search', 'news']
+        if name.lower() in invalid_entries:
+            return None
+        
+        return name
+
+    def fuzzy_dedupe(names, threshold=75):
+        unique_names = []
+        for name in names:
+            if not unique_names or all(fuzz.ratio(name, un) < threshold for un in unique_names):
+                unique_names.append(name)
+        return unique_names
+
+    movie_names = []
+    for result in g_s:
+        movie_name = extract_movie_name(result)
+        if movie_name:
+            cleaned_name = clean_movie_name(movie_name)
+        else:
+            cleaned_name = clean_movie_name(result)
+        
+        if cleaned_name and len(cleaned_name) > 1:
+            movie_names.append(cleaned_name)
+
+    unique_names = fuzzy_dedupe(movie_names)
+    
+    if not unique_names:
         k = await msg.reply(
             "I Cᴏᴜʟᴅɴ'ᴛ Fɪɴᴅ Aɴʏᴛʜɪɴɢ Rᴇʟᴀᴛᴇᴅ Tᴏ Tʜᴀᴛ. Cʜᴇᴄᴋ Yᴏᴜʀ Sᴘᴇʟʟɪɴɢ"
         )
         await asyncio.sleep(8)
         return await k.delete()
+
+    movielist = unique_names
     temp.GP_SPELL[msg.id] = movielist
+
+    user = msg.from_user.id if msg.from_user else 0
 
     async def check_results(query, clb):
         query = query.strip()
@@ -618,7 +639,7 @@ async def advantage_spell_chok(msg: Message):
     if SPELL_FILTER:
         filtered = await asyncio.gather(
             *[
-                check_results(movie, f"pmspolling#{user}#{k}")
+                check_results(movie, f"spolling#{user}#{k}")
                 for k, movie in enumerate(movielist)
             ]
         )

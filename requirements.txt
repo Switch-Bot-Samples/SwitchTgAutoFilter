@@ -13,6 +13,7 @@ aiohttp
 aiohttp-client-cache
 aniparse
 guessit
+rapidfuzz
 pyrogram
 bs4
 requests
