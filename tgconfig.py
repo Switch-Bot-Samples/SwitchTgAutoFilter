@@ -1,8 +1,9 @@
 import re, time
 from os import environ, path, mkdir
-from Script import script 
-
+from Script import script
 id_pattern = re.compile(r'^.\d+$')
+from dotenv import load_dotenv
+load_dotenv()
 
 def is_enabled(value, default):
     if value.strip().lower() in ["on", "true", "yes", "1", "enable", "y"]: return True

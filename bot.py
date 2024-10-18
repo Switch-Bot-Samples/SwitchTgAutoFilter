@@ -35,7 +35,11 @@ from config import ADMINS
 WS_URL = os.getenv("CHAT_SERVICE_WS_URL")
 CONFIG_WS_URL = swibots.get_config()["CHAT_SERVICE"]["WS_URL"]
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO,
+handlers=[
+    logging.StreamHandler(),
+    logging.FileHandler("filter-bot.log")
+])
 
 log = logging.getLogger(__name__)
 

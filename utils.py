@@ -155,7 +155,6 @@ async def search_yahoo(text):
 async def search_bing(text):
     url = f'https://www.bing.com/search?q={text}'
     response = requests.get(url)
-    response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
     titles = soup.find_all('h2')
     return [title.getText() for title in titles]
@@ -163,9 +162,15 @@ async def search_bing(text):
 async def search_gagala(text):
     result = await search_google(text)
     if not result or len(result) < 3:
-        result.extend(await search_bing(text))
+        try:
+            result.extend(await search_bing(text))
+        except Exception as e:
+            logger.error(f"Error in search_bing: {e}")
     if not result or len(result) < 3:
-        result.extend(await search_yahoo(text))
+        try:
+            result.extend(await search_yahoo(text))
+        except Exception as e:
+            logger.error(f"Error in search_yahoo: {e}")
     return result
 
 async def search_google(text):

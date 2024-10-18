@@ -28,6 +28,7 @@ from common import DOMAIN
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp
 from database.connections_mdb import active_connection
 from tgconfig import SEND_PM
+import io
 
 logger = logging.getLogger(__name__)
 BATCH_FILES = {}
@@ -45,6 +46,7 @@ async def onGetLink(client: Client, message: Message):
     hash = b16encode(encodeId.encode()).decode()
     url = f"{DOMAIN}/{SW_USERNAME}:stream_{hash}"
     await message.reply_text(f"**Here is your stream link!**\n\n{url}")
+
 
 
 @Client.on_message(filters.command("start") & filters.incoming)
@@ -895,3 +897,24 @@ async def geg_template(client, message):
     settings = await get_settings(grp_id)
     template = settings["template"]
     await sts.edit(f"Cᴜʀʀᴇɴᴛ Tᴇᴍᴘʟᴀᴛᴇ Fᴏʀ {title} Iꜱ\n\n{template}")
+
+
+@Client.on_message(filters.command("logs") & filters.user(ADMINS))
+async def get_logs(client: Client, message: Message):
+    try:
+        # Read the last 100 lines of the log file
+        with open("filter-bot.log", "r") as log_file:
+            logs = log_file.readlines()[-100:]
+        
+        # Join the log lines into a single string
+        log_text = "".join(logs)
+        
+        # If the log is too long, send it as a file
+        if len(log_text) > 4000:
+            with io.BytesIO(log_text.encode()) as log_file:
+                log_file.name = "bot_logs.txt"
+                await message.reply_document(log_file)
+        else:
+            await message.reply_text(f"<code>{log_text}</code>")
+    except Exception as e:
+        await message.reply_text(f"An error occurred while fetching logs: {str(e)}")
