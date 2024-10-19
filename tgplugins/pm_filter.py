@@ -6,7 +6,7 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 )
 from Script import script
 from utils import get_shortlink
-from config import SPELL_FILTER
+from config import SPELL_FILTER, SPELL_FILTER_VERBOSE
 from tgconfig import (
     AUTH_USERS,
     PM_IMDB,
@@ -502,7 +502,7 @@ async def pm_spoll_choker(msg):
         if res:
             return [InlineKeyboardButton(query, callback_data=clb)]
 
-    if SPELL_FILTER:
+    if SPELL_FILTER and SPELL_FILTER_VERBOSE:
         filtered = await asyncio.gather(
             *[
                 check_results(movie, f"pmspolling#{user}#{k}")
