@@ -66,9 +66,11 @@ async def get_poster(query, bulk=False, id=False, file=None):
             year = None
         try:
            movieid = imdb.search_movie(title.lower(), results=10)
-        except:
+        except Exception as er:
+           logger.exception(er)
            return None
         if not movieid:
+            logger.error(f"No results for {movieid}")
             return None
         if year:
             filtered=list(filter(lambda k: str(k.get('year')) == str(year), movieid))
