@@ -114,6 +114,7 @@ STREAM_PORT = environ.get("STREAM_PORT", PORT)
 STREAM_URL = environ.get("STREAM_URL", "")
 
 SPELL_FILTER = is_enabled(environ.get("SPELL_FILTER", "False"), False)
+SPELL_FILTER_VERBOSE = is_enabled(environ.get("SPELL_FILTER_VERBOSE", "False"), False)
 
 FORCE_SWITCH_STREAM = is_enabled(environ.get("FORCE_SWITCH_STREAM", "False"), False)
 SEARCH_SWITCH_FILES = is_enabled(environ.get("SEARCH_SWITCH_FILES", "True"), True)
