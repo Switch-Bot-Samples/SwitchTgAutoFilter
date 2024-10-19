@@ -211,7 +211,7 @@ async def pm_next_page(bot, query):
     filters.create(lambda _, __, query: query.data.startswith("pmspolling"))
 )
 async def pm_spoll_tester(bot, query):
-    if DISABLE_PM_SEARCH:
+    if DISABLE_PM_SEARCH and SPELL_FILTER_VERBOSE:
         return
 
     _, user, movie_ = query.data.split("#")
