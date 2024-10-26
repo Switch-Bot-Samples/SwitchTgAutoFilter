@@ -44,7 +44,7 @@ from common import (
     SW_GROUP_ID,
     SW_COMMUNITY,
 )
-from tgconfig import SEND_PM
+from tgconfig import SEND_PM, FORCE_RESOLVE
 
 # Database Function
 from database.connections_mdb import (
@@ -117,7 +117,8 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
         else:
             verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=getfile&hash={fileId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
             verifyLink += f"&name={quote(name)}"
-
+        if FORCE_RESOLVE:
+            verifyLink = f"https://resolver-plum.vercel.app/redirect?url={quote(verifyLink)}"
         await client.send_message(
             userId,
             f"Click on the link to get your file!\n\n**[{get_size(file.file_size)} {getattr(file, 'description', file.file_name)}]({verifyLink})**\n\n",
@@ -142,6 +143,10 @@ async def sendVerifyMessage(client: Client, userId, name, fileId, file: Media):
     else:
         verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=verify&hash={encodeId}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
         verifyLink += f"&name={quote(name)}"
+
+    if FORCE_RESOLVE:
+        verifyLink = f"https://resolver-plum.vercel.app/redirect?url={quote(verifyLink)}"
+
     #     print(verifyLink)
 
     msg = await client.send_message(

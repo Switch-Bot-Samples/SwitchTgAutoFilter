@@ -22,6 +22,7 @@ from tgconfig import (
     FORCE_SUB_TEXT,
     SUPPORT_CHAT,
     TG_NO_VERIFY,
+    FORCE_RESOLVE
 )
 from base64 import b16encode
 from common import DOMAIN
@@ -381,6 +382,9 @@ async def start(client: Client, message: Message):
         else:
             verifyLink = f"{DOMAIN}/open/{SW_COMMUNITY}?command=start&hash={file_id}&group_id={SW_GROUP_ID}&username={SW_USERNAME}&is_preview=false"
             verifyLink += f"&name={quote(message.from_user.first_name)}"
+        if FORCE_RESOLVE:
+            verifyLink = f"https://resolver-plum.vercel.app/redirect?url={quote(verifyLink)}"
+
         file = details[0]
         await client.send_message(
             chat_id=message.from_user.id,
