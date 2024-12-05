@@ -12,6 +12,7 @@ rapidfuzz
 aiohttp
 aiohttp-client-cache
 aniparse
+pytz
 guessit
 rapidfuzz
 pyrogram
