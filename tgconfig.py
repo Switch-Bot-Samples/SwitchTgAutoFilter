@@ -91,6 +91,7 @@ DUAL_SERVER = is_enabled(environ.get("DUAL_SERVER", "False"), False)
 
 DISABLE_PM_SEARCH = is_enabled(environ.get("DISABLE_PM_SEARCH", "False"), False)
 SEND_FILE_PM = is_enabled(environ.get("SEND_FILE_PM", "False"), False)
+FORCE_RESOLVE = is_enabled(environ.get("FORCE_RESOLVE", "True"), True)
 
 SLEEP_THRESHOLD = 360
 USE_SESSION_FILE = True
